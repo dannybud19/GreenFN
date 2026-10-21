@@ -1,0 +1,16 @@
+# Large/local artifacts
+data/
+models/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Secrets
+kaggle.json
+access_token
+.env
+
+.DS_Store
