@@ -25,15 +25,19 @@ Settles the data scope, feature set and checks for Phases 1–2. Numbers come fr
 
 **Impact features (labels and evaluation, not inputs):** `bpm`, `obpm`, `dbpm`, `ws_48`, `vorp`, `o_rtg`, `d_rtg`. Keeping them out of the inputs means archetypes describe *how* a player plays rather than *how good* he is. They're used to colour plots, and the models are checked against them.
 
-**Context (stored, not modelled):** `age`, `pos`, `g`, `mp`, `n_teams`, plus height and weight from `Player Career Info.csv` (100% of 1980+ players found; under 0.1% null).
+**Body features (inputs for body mode only):** height (`ht_in_in`) and weight (`wt`) from `Player Career Info.csv` (100% of 1980+ players found; under 0.1% null). These are listed measurements: one value per player for the whole career, so weight changes over time are not captured. They stay out of the style embedding so style comps describe how a player plays, not his size. Body similarity uses height and weight z-scored within each season, and the UI blends style and body similarity with a slider (default: style only).
+
+**Context (stored, not modelled):** `age`, `pos`, `g`, `mp`, `n_teams`. Minutes (`mp`) is also the sample weight in training and pooling. Position is used only as a label for the cluster check in Phase 2.
 
 **Dropped:**
 - Derived or redundant columns: `trb*` (= orb + drb), `fg*` and `fg_percent` (covered by eFG/TS), `e_fg_percent` (overlaps TS), `pts_per_100_poss` (= usage × efficiency), the per-100 rebound/assist/steal/block counts (the % versions adjust for pace and context), and `per` (an opaque blend).
 - `gs`: not tracked in 1980–81.
+- Draft position: a forecasting signal, not a style one.
+- Draft combine (wingspan, reach, vertical, sprint): only covers players who attended, roughly 2000 onward, and many stars skipped it. Listed height and weight cover every player instead. (Decided 2026-10-23. The 2023 nba_api combine file in `data/raw/nba_api/` is no longer used.)
 
 **Deferred:**
+- *Pre-1980 seasons (v2):* add 1946-47 to 1978-79 later by masking the stats that weren't recorded yet (blocks and steals before 1973-74, turnovers before the late 1970s, threes before 1979-80) and training with random feature masking. Decided 2026-10-23: get an accurate 1980+ model first.
 - *Shot zones and play-by-play* (`Player Shooting.csv`, `Player Play By Play.csv`): these start in 1997, so using them would cut 17 seasons. They become an optional "1997+ extended" feature set.
-- *Draft combine (Phase 2):* nba_api has no Basketball-Reference ID, so join on normalized name (ASCII, lowercase, no punctuation or Jr./II) plus draft year. nba_api's `season_year="2023-24"` is the **2023** combine: 56 of 58 picks from the 2023 draft match by name, against only 7 of 58 from 2024.
 
 ## Phase 1 checks (assert in the pipeline)
 
@@ -51,4 +55,43 @@ Settles the data scope, feature set and checks for Phases 1–2. Numbers come fr
 1. **Era leak:** a classifier predicting decade from the embedding should score close to chance. If it doesn't, the season standardization isn't working.
 2. **Sanity:** position can be predicted from the embedding well above chance.
 3. **Stability:** the same player's consecutive seasons sit closer together than random pairs of players.
-4. **Combine join:** at least 90% of each draft class matches a combine row by name. Unmatched names go into a manual fix-up file.
+4. **Box-score correlation** (from NBA2Vec): the top PCA dimensions of the embedding correlate significantly with box-score stats (rebounds, assists, threes), Bonferroni-corrected.
+5. **Nearest-neighbour sanity:** the sanity-check players below pass their tests.
+6. **Don't judge clusters in 2D:** UMAP/t-SNE distances are for display only (NBA2Vec notes t-SNE loses global structure). Comps are always computed in the full embedding space.
+
+## Sanity-check players
+
+Twenty well-known players spread across eras and archetypes. Expected comps are rough guesses for judging results, not ground truth. **Hold out the five marked † and don't look at them while tuning**, or the model just learns to match these expectations.
+
+| # | Player | In data | Archetype | Tests | Expected top comps |
+|---|---|---|---|---|---|
+| 1 | Kareem Abdul-Jabbar | 1980–89 | Ageing centre | Only the end of a career is in the data | Duncan, Robinson, Hakeem |
+| 2 | Magic Johnson | 1980–96 | 6'9" point guard | Size vs role | LeBron, Luka, Kidd |
+| 3 | Larry Bird | 1980–92 | Shooting, passing forward | Early 3PT era | Dirk, Pierce, LeBron |
+| 4 | Isiah Thomas | 1982–94 | Small scoring point guard | Small guard | Iverson, Kyrie, Tim Hardaway |
+| 5 | Charles Barkley | 1985–2000 | 6'6" rebounding forward | Style vs body disagree | Style: Zion, Giannis. Body: wings |
+| 6 | Michael Jordan | 1985–2003 | Scoring wing | Known pair with Kobe | Kobe, Wade, McGrady |
+| 7 | Hakeem Olajuwon † | 1985–2002 | Two-way centre | Steals and blocks together | Robinson, Embiid, Ewing |
+| 8 | John Stockton | 1985–2003 | Pure point guard | Low spread | Chris Paul, Nash, Kidd |
+| 9 | Dennis Rodman | 1987–2000 | Rebounder, rarely scores | Outlier | Ben Wallace, Drummond |
+| 10 | Shaquille O'Neal | 1993–2011 | Post centre, poor FT | Known pair (also in NBA2Vec) | Dwight Howard, Moses Malone |
+| 11 | Allen Iverson † | 1997–2010 | Small high-usage scorer | Small size, big role | Westbrook, Kyrie, Isiah Thomas |
+| 12 | Steve Nash | 1997–2014 | Shooting point guard | Known pair (NBA2Vec) | Chris Paul, Stockton |
+| 13 | Kobe Bryant | 1997–2016 | Scoring wing | Known pair with Jordan | Jordan, Wade, DeRozan |
+| 14 | Dirk Nowitzki † | 1999–2019 | Stretch big | Big who shoots | Towns, Bird, Durant |
+| 15 | LeBron James | 2004–2026 | Do-everything forward | Long career, changing role | Magic, Bird |
+| 16 | Derrick Rose † | 2009–2024 | Peak then injuries | Peak vs centre gap | Westbrook, Iverson |
+| 17 | Stephen Curry | 2010–2026 | Volume 3PT shooter | No true past match | Lillard, Nash, Ray Allen |
+| 18 | Draymond Green | 2013–2026 | Low-scoring hub defender | Value without points | Rodman-lite, Ben Simmons |
+| 19 | Giannis Antetokounmpo † | 2014–2026 | Athletic non-shooter | Outlier | Shaq-lite, Zion |
+| 20 | Nikola Jokić | 2016–2026 | Passing centre | Unicorn | Sabonis, Marc Gasol |
+
+Years are season end years, matching `season`.
+
+| Test | Players | Pass if |
+|---|---|---|
+| Known pairs | Jordan–Kobe, Shaq–Howard, Nash–Paul | Each is in the other's top 5 |
+| Era translation | Curry, Magic, Bird | Comps come from more than one decade |
+| Outliers and unicorns | Rodman, Jokić, Giannis, Curry | Top similarity is lower than for typical players |
+| Career shape | Stockton, Rose, LeBron, Kareem | Stockton has low spread; Rose has a large peak-vs-centre gap |
+| Style vs body | Magic, Barkley, Isiah, Iverson | Style mode matches by role; body mode matches by size |
