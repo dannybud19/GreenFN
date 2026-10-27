@@ -9,7 +9,6 @@ uv sync                                  # Python 3.12 + pinned deps from uv.loc
 uv run kaggle auth login                 # one-time Kaggle login (or set KAGGLE_API_TOKEN)
 uv run python src/download_data.py       # -> data/raw/*.csv
 uv run python src/inspect_raw.py         # -> notes/raw_data_inventory.md
-uv run python src/nba_api_smoke.py       # test call to stats.nba.com
 ```
 
 ## Layout

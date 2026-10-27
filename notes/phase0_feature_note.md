@@ -33,7 +33,7 @@ Settles the data scope, feature set and checks for Phases 1–2. Numbers come fr
 - Derived or redundant columns: `trb*` (= orb + drb), `fg*` and `fg_percent` (covered by eFG/TS), `e_fg_percent` (overlaps TS), `pts_per_100_poss` (= usage × efficiency), the per-100 rebound/assist/steal/block counts (the % versions adjust for pace and context), and `per` (an opaque blend).
 - `gs`: not tracked in 1980–81.
 - Draft position: a forecasting signal, not a style one.
-- Draft combine (wingspan, reach, vertical, sprint): only covers players who attended, roughly 2000 onward, and many stars skipped it. Listed height and weight cover every player instead. (Decided 2026-10-23. The 2023 nba_api combine file in `data/raw/nba_api/` is no longer used.)
+- Draft combine (wingspan, reach, vertical, sprint): only covers players who attended, roughly 2000 onward, and many stars skipped it. Listed height and weight cover every player instead. (Decided 2026-10-23. The 2023 nba_api combine test file and `src/nba_api_smoke.py` were deleted on 2026-10-27.)
 
 **Deferred:**
 - *Pre-1980 seasons (v2):* add 1946-47 to 1978-79 later by masking the stats that weren't recorded yet (blocks and steals before 1973-74, turnovers before the late 1970s, threes before 1979-80) and training with random feature masking. Decided 2026-10-23: get an accurate 1980+ model first.
