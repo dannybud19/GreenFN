@@ -1,6 +1,6 @@
 # GreenFN
 
-GreenFN is an NBA player-modelling project. It builds per-season player representations from Basketball-Reference box score data (the Kaggle `sumitrodatta/nba-aba-baa-stats` dataset), with listed height and weight for an optional body-similarity mode, learns embeddings and archetypes with scikit-learn, PyTorch and UMAP, and serves them through an API and a web front end. **Status:** Phase 0 is complete: the repo, environment and raw data are in place, and `notes/phase0_feature_note.md` sets the scope (NBA, 1980–2026), features and checks. Phase 1 (feature pipeline) is in progress: `src/build_dataset.py` builds the player-season table and asserts the Phase 1 checks.
+GreenFN is an NBA player-modelling project. It builds per-season player representations from Basketball-Reference box score data (the Kaggle `sumitrodatta/nba-aba-baa-stats` dataset), with listed height and weight for an optional body-similarity mode, learns embeddings and archetypes with scikit-learn, PyTorch and UMAP, and serves them through an API and a web front end. **Status:** Phase 0 is complete: the repo, environment and raw data are in place, and `notes/phase0_feature_note.md` sets the scope (NBA, 1980–2026), features and checks. Phase 1 (data) is complete: `src/build_dataset.py` builds and tests the player-season table, and `notes/data_card.md` describes it. Phase 2 (baseline) is next.
 
 ## Setup
 
