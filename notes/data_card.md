@@ -19,6 +19,17 @@ Qualified players per season run from 228 (1980) to 379 (2026), median 322. The 
 | 2010s | 331 | 338 | 352 | 344 | 337 | 366 | 350 | 355 | 353 | 361 |
 | 2020s | 355 | 371 | 375 | 367 | 360 | 375 | 379 | | | |
 
+## Raw data checksums
+
+SHA-256 of the raw CSVs the build reads, from the Kaggle download of 2026-10-22. `src/build_dataset.py` checks them at load and stops with "raw data changed; re-check counts and update the data card" if any differs.
+
+| File | SHA-256 |
+|---|---|
+| `Per 100 Poss.csv` | `c132dc9b958e213d05e1c93fe5cf2b656a613626479b3f3fc4a88e0037a7e175` |
+| `Advanced.csv` | `e1616ffe7759c22b014cbbb7c7ce10a591615e7ef1e08cc0dba4d2a02872948d` |
+| `Player Totals.csv` | `1c081cd7f9c694755ea2210c3426e709540afedc31c1bf781456f3df4b7582b2` |
+| `Player Career Info.csv` | `4abda6b51da399a154f7118eed7f0775c73b1335dae5c0d7bc41088da871b9f5` |
+
 ## Features
 
 **Style features (model inputs).** Every one is complete for qualified rows from 1980 on. "First season" is the first NBA season the stat appears in the raw data, which matters for the pre-1980 v2.

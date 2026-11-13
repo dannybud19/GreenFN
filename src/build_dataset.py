@@ -3,6 +3,7 @@
 Scope, features and checks follow notes/phase0_feature_note.md.
 """
 
+import hashlib
 from pathlib import Path
 
 import numpy as np
@@ -41,9 +42,26 @@ COUNTS = ["x3p", "x3pa", "x2p", "x2pa", "ft", "fta"]
 # Totals that pin down the 2026-10-22 snapshot (check 8); a re-download changes them.
 EXPECTED_ROWS, EXPECTED_QUALIFIED = 20_550, 14_749
 
+# SHA-256 of each raw CSV the build reads (also listed in notes/data_card.md).
+RAW_SHA256 = {
+    "Per 100 Poss.csv": "c132dc9b958e213d05e1c93fe5cf2b656a613626479b3f3fc4a88e0037a7e175",
+    "Advanced.csv": "e1616ffe7759c22b014cbbb7c7ce10a591615e7ef1e08cc0dba4d2a02872948d",
+    "Player Totals.csv": "1c081cd7f9c694755ea2210c3426e709540afedc31c1bf781456f3df4b7582b2",
+    "Player Career Info.csv": "4abda6b51da399a154f7118eed7f0775c73b1335dae5c0d7bc41088da871b9f5",
+}
+
+
+def read_raw(name: str) -> pd.DataFrame:
+    """Read a raw CSV after checking its SHA-256 against RAW_SHA256."""
+    path = RAW_DIR / name
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    if digest != RAW_SHA256[name]:
+        raise ValueError(f"raw data changed; re-check counts and update the data card ({name}: sha256 {digest})")
+    return pd.read_csv(path)
+
 
 def load(name: str) -> pd.DataFrame:
-    df = pd.read_csv(RAW_DIR / name)
+    df = read_raw(name)
     return df[(df["lg"] == "NBA") & df["season"].between(FIRST_SEASON, LAST_SEASON)]
 
 
@@ -88,32 +106,42 @@ def season_z(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 def check(df: pd.DataFrame, per100_raw: pd.DataFrame) -> None:
     """Phase 1 checks from the feature note."""
     # 1. Scope
-    assert df["season"].between(FIRST_SEASON, LAST_SEASON).all() and (df["lg"] == "NBA").all()
+    if not (df["season"].between(FIRST_SEASON, LAST_SEASON).all() and (df["lg"] == "NBA").all()):
+        raise ValueError("scope: season outside 1980-2026 or lg is not NBA")
     # 2. One row per player-season
-    assert not df.duplicated(["season", "player_id"]).any()
+    if df.duplicated(["season", "player_id"]).any():
+        raise ValueError("duplicate (season, player_id) rows after the multi-team collapse")
     # 3. Joins (row counts are asserted in main) and every player has career info
-    assert df["ht_in_in"].notna().mean() > 0.999, "height missing for too many players"
+    if not df["ht_in_in"].notna().mean() > 0.999:
+        raise ValueError("height missing for too many players")
     # 4. xTM g and mp equal the sum of the per-team rows
     team_sums = per100_raw[~is_multi_team(per100_raw)].groupby(["season", "player_id"])[["g", "mp"]].sum()
     multi = per100_raw[is_multi_team(per100_raw)].set_index(["season", "player_id"])[["g", "mp"]]
-    assert (multi == team_sums.loc[multi.index]).all().all(), "xTM totals don't match per-team rows"
+    if not (multi == team_sums.loc[multi.index]).all().all():
+        raise ValueError("xTM totals don't match per-team rows")
     # 5. No nulls in style or impact columns for qualified rows
     q = df[df["qualified"]]
     nulls = q[STYLE + IMPACT].isna().sum()
-    assert not nulls.any(), f"nulls in qualified rows: {nulls[nulls > 0].to_dict()}"
+    if nulls.any():
+        raise ValueError(f"nulls in qualified rows: {nulls[nulls > 0].to_dict()}")
     # 6. Ranges for qualified rows
     for col, (lo, hi) in {"ts_percent": (0.30, 0.85), "usg_percent": (3, 45), "bpm": (-15, 20)}.items():
-        assert q[col].between(lo, hi).all(), f"{col} outside [{lo}, {hi}] for a qualified row"
+        if not q[col].between(lo, hi).all():
+            raise ValueError(f"{col} outside [{lo}, {hi}] for a qualified row")
     # 7. Per-100 consistency, within rounding
     p = df.dropna(subset=["trb_per_100_poss", "fga_per_100_poss"])
-    assert ((p["orb_per_100_poss"] + p["drb_per_100_poss"] - p["trb_per_100_poss"]).abs() <= 0.2).all()
-    assert ((p["x2pa_per_100_poss"] + p["x3pa_per_100_poss"] - p["fga_per_100_poss"]).abs() <= 0.2).all()
+    if not ((p["orb_per_100_poss"] + p["drb_per_100_poss"] - p["trb_per_100_poss"]).abs() <= 0.2).all():
+        raise ValueError("orb + drb differs from trb by more than 0.2 per 100 possessions")
+    if not ((p["x2pa_per_100_poss"] + p["x3pa_per_100_poss"] - p["fga_per_100_poss"]).abs() <= 0.2).all():
+        raise ValueError("x2pa + x3pa differs from fga by more than 0.2 per 100 possessions")
     # 8. Qualified count per season, and totals match the snapshot
     per_season = df.groupby("season")["qualified"].sum()
-    assert per_season.between(200, 400).all(), f"qualified per season out of range: {per_season.agg(['min', 'max']).to_dict()}"
-    assert (len(df), int(df["qualified"].sum())) == (EXPECTED_ROWS, EXPECTED_QUALIFIED), (
-        f"got {len(df):,} rows / {int(df['qualified'].sum()):,} qualified; the Kaggle data may have been updated"
-    )
+    if not per_season.between(200, 400).all():
+        raise ValueError(f"qualified per season out of range: {per_season.agg(['min', 'max']).to_dict()}")
+    if (len(df), int(df["qualified"].sum())) != (EXPECTED_ROWS, EXPECTED_QUALIFIED):
+        raise ValueError(
+            f"got {len(df):,} rows / {int(df['qualified'].sum()):,} qualified; the Kaggle data may have been updated"
+        )
 
 
 def main() -> None:
@@ -121,7 +149,7 @@ def main() -> None:
     per100 = collapse(per100_raw)
     advanced = collapse(load("Advanced.csv"))
     totals = collapse(load("Player Totals.csv"))
-    career = pd.read_csv(RAW_DIR / "Player Career Info.csv")
+    career = read_raw("Player Career Info.csv")
 
     # Context columns come from per-100; the other tables add only what per-100 lacks.
     adv_cols = [c for c in advanced.columns if c not in per100.columns]
@@ -131,8 +159,10 @@ def main() -> None:
         .merge(team_info(per100_raw), on=["season", "player_id"], how="left", validate="1:1")
         .merge(career[["player_id"] + BODY], on="player_id", how="left", validate="m:1")
     )
-    assert len(df) == len(per100) == len(advanced) == len(totals), "per-100, advanced and totals don't join 1:1"
-    assert df["player_id"].isin(career["player_id"]).all(), "player_id missing from Player Career Info"
+    if not len(df) == len(per100) == len(advanced) == len(totals):
+        raise ValueError("per-100, advanced and totals don't join 1:1")
+    if not df["player_id"].isin(career["player_id"]).all():
+        raise ValueError("player_id missing from Player Career Info")
     df["n_teams"] = df["n_teams"].fillna(1).astype(int)
     df["teams"] = df["teams"].fillna(df["team"])
 
