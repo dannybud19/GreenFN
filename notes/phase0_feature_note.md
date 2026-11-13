@@ -21,7 +21,7 @@ Settles the data scope, feature set and checks for Phases 1–2. Numbers come fr
 | Rebounding | `orb_percent`, `drb_percent` |
 | Defense events | `stl_percent`, `blk_percent`, `pf_per_100_poss` |
 
-\* Shrink toward the league average for that season, using attempt totals from `Player Totals.csv`. Starting prior weights are 100 attempts for 3P%, 50 for FT% and 100 for 2P%; tune them in Phase 1. Shrinkage also fills the 15.5% of rows where 3P% is empty because the player took no threes.
+\* Shrink toward the league average for that season, using attempt totals from `Player Totals.csv`. Starting prior weights are 100 attempts for 3P%, 50 for FT% and 100 for 2P%; the priors are tuned in Phase 2 (step 4: year-to-year predictiveness, training players only). Shrinkage also fills the 15.5% of rows where 3P% is empty because the player took no threes (before collapsing traded players; the data card's 2,858 rows, 13.9%, are after collapse).
 
 **Impact features (labels and evaluation, not inputs):** `bpm`, `obpm`, `dbpm`, `ws_48`, `vorp`, `o_rtg`, `d_rtg`. Keeping them out of the inputs means archetypes describe *how* a player plays rather than *how good* he is. They're used to colour plots, and the models are checked against them.
 
@@ -45,23 +45,25 @@ Settles the data scope, feature set and checks for Phases 1–2. Numbers come fr
 2. `(season, player_id)` is unique after the multi-team collapse.
 3. Per-100 and advanced join on 100% of rows, and every `player_id` is in `Player Career Info.csv`.
 4. Each `xTM` row's `g` and `mp` equal the sum of that player's per-team rows.
-5. No nulls in style or impact columns for qualified rows (after shrinkage). Known exceptions in unqualified rows: 5 rows with 0 minutes, and empty `o_rtg`/`tov_percent`/`ts_percent` for players under 25 minutes.
+5. No nulls in style or impact columns for qualified rows (after shrinkage). Known exceptions in unqualified rows: 5 rows with 0 minutes (before collapsing traded players; the data card's 3 rows are after collapse), and empty `o_rtg`/`tov_percent`/`ts_percent` for players under 25 minutes.
 6. Ranges for qualified rows: `ts_percent` in [0.30, 0.85], `usg_percent` in [3, 45], `bpm` in [−15, 20]. Unfiltered rows reach `usg` = 100 and `bpm` = 242, which is why the minutes cutoff matters.
 7. Consistency: `orb + drb ≈ trb` and `x2pa + x3pa ≈ fga` per 100 possessions, within 0.2.
 8. Qualified count per season is in [200, 400], and the totals match this snapshot (20,550 player-seasons and 14,749 qualified). A change means the Kaggle data was updated, for example when the 2027 season is added.
 
-## Phase 2 checks (models)
+## Model checks
 
-1. **Era leak:** a classifier predicting decade from the embedding should score close to chance. If it doesn't, the season standardization isn't working.
-2. **Sanity:** position can be predicted from the embedding well above chance.
-3. **Stability:** the same player's consecutive seasons sit closer together than random pairs of players.
-4. **Box-score correlation** (from NBA2Vec): the top PCA dimensions of the embedding correlate significantly with box-score stats (rebounds, assists, threes), Bonferroni-corrected.
-5. **Nearest-neighbour sanity:** the sanity-check players below pass their tests.
-6. **Don't judge clusters in 2D:** UMAP/t-SNE distances are for display only (NBA2Vec notes t-SNE loses global structure). Comps are always computed in the full embedding space.
+The phase that runs each check is in brackets.
+
+1. **Era leak** [Phase 4]: a classifier predicting decade from the embedding should score close to chance. If it doesn't, the season standardization isn't working. Raw-feature era leakage is first measured in Phase 2 as a reference.
+2. **Sanity** [Phase 2 onward]: position can be predicted from the embedding well above chance.
+3. **Stability** [Phase 3]: the same player's consecutive seasons sit closer together than random pairs of players.
+4. **Box-score correlation** [Phase 2 onward] (from NBA2Vec): the top PCA dimensions of the embedding correlate significantly with box-score stats (rebounds, assists, threes), Bonferroni-corrected.
+5. **Nearest-neighbour sanity** [Phase 2 onward]: the sanity-check players below pass their tests.
+6. **Don't judge clusters in 2D** [Phase 6]: UMAP/t-SNE distances are for display only (NBA2Vec notes t-SNE loses global structure). Comps are always computed in the full embedding space.
 
 ## Sanity-check players
 
-Twenty well-known players spread across eras and archetypes. Expected comps are rough guesses for judging results, not ground truth. **Hold out the five marked † and don't look at them while tuning**, or the model just learns to match these expectations.
+Twenty well-known players spread across eras and archetypes. Expected comps are rough guesses for judging results, not ground truth. **Hold out the five marked † and don't look at them while tuning**, or the model just learns to match these expectations. The hold-out players are listed by `player_id` in `config/holdout.json`.
 
 | # | Player | In data | Archetype | Tests | Expected top comps |
 |---|---|---|---|---|---|
