@@ -21,7 +21,7 @@ Settles the data scope, feature set and checks for Phases 1–2. Numbers come fr
 | Rebounding | `orb_percent`, `drb_percent` |
 | Defense events | `stl_percent`, `blk_percent`, `pf_per_100_poss` |
 
-\* Shrink toward the league average for that season, using attempt totals from `Player Totals.csv`. Starting prior weights are 100 attempts for 3P%, 50 for FT% and 100 for 2P%; the priors are tuned in Phase 2 (step 4: year-to-year predictiveness, training players only). Shrinkage also fills the 15.5% of rows where 3P% is empty because the player took no threes (before collapsing traded players; the data card's 2,858 rows, 13.9%, are after collapse).
+\* Shrink toward the league average for that season, using attempt totals from `Player Totals.csv`. Prior weights, tuned in Phase 2 by year-to-year predictiveness on training players only, are 50 attempts for 3P%, 200 for 2P% and 25 for FT% (see `reports/shrinkage_tuning.md`). Shrinkage also fills the 15.5% of rows where 3P% is empty because the player took no threes (before collapsing traded players; the data card's 2,858 rows, 13.9%, are after collapse).
 
 **Impact features (labels and evaluation, not inputs):** `bpm`, `obpm`, `dbpm`, `ws_48`, `vorp`, `o_rtg`, `d_rtg`. Keeping them out of the inputs means archetypes describe *how* a player plays rather than *how good* he is. They're used to colour plots, and the models are checked against them.
 

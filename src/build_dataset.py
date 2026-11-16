@@ -22,9 +22,9 @@ SEASON_GAMES = {1999: 50, 2012: 66, 2020: 72, 2021: 72}
 
 # Shrunk percentage -> (makes, attempts, prior weight in attempts)
 SHRINK = {
-    "x3p_percent": ("x3p", "x3pa", 100),
-    "x2p_percent": ("x2p", "x2pa", 100),
-    "ft_percent": ("ft", "fta", 50),
+    "x3p_percent": ("x3p", "x3pa", 50),
+    "x2p_percent": ("x2p", "x2pa", 200),
+    "ft_percent": ("ft", "fta", 25),
 }
 
 CONTEXT = ["season", "player", "player_id", "team", "n_teams", "teams", "age", "pos", "g", "mp"]
