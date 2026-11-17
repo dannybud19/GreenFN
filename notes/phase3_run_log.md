@@ -14,7 +14,7 @@ Run started 17 Nov 2026, 21:02 (local time); last checkpoint commit about 21:10,
 | 5 Search, size 32 | a28719c | 84 s | 54 rows, 54 unique |
 | 6 Report | 1adab68 | 4 s | B2 row matches Phase 2 exactly (0.778, 0.668, 0.608, persistence 0.610). 5 PASS/FAIL gate lines and 1 PENDING |
 | 7 score_sanity.py | 93fa4cc | n/a | `--report` argument and looser row match. No-argument run leaves `reports/phase2_baselines.md` byte-identical. Run on the Phase 3 report fails with 27 unmarked names, identical to `reports/phase3_unmarked_comps.json`; report not modified |
-| 8 Notebook | 74f1294 | about 1 min | `notebooks/03_encoder.ipynb`, 0 error outputs, numbers asserted equal to the report, nothing changed under `reports/` |
+| 8 Notebook | 74f1294 | not timed | `notebooks/03_encoder.ipynb`, 0 error outputs, numbers asserted equal to the report, nothing changed under `reports/` |
 | 9 Wrap up | (this commit) | n/a | Draft PR opened, not merged |
 
 ## Issues and fixes
