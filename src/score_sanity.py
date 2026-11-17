@@ -10,6 +10,7 @@ Scoring (decided 17 Nov 2026, see the eval plan change log):
 B0 random is not judged. Re-run this after evaluate.py, which rewrites the report.
 """
 
+import argparse
 import json
 import re
 from collections import Counter
@@ -19,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "reports" / "phase2_baselines.md"
 MARKS = ROOT / "config" / "sanity_marks.json"
 POINTS = {"fair": 1.0, "partial": 0.5, "wrong": 0.0}
-ROW = re.compile(r"^\| (B\w+ [^|]+?) \| ([^|]+?) \| *([^|]*?) *\|$")
+ROW = re.compile(r"^\| ([^|]+?) \| ([^|]+?) \| *([^|]*?) *\|$")
 SUMMARY_HEAD = "## Sanity summary"
 
 
@@ -33,9 +34,9 @@ def load_marks() -> tuple[dict, dict]:
     return marks, raw.get("aliases", {})
 
 
-def main() -> None:
+def main(report: Path = REPORT) -> None:
     marks, aliases = load_marks()
-    lines = REPORT.read_text().splitlines()
+    lines = report.read_text().splitlines()
     if SUMMARY_HEAD in lines:  # drop only the old summary section (up to the next "## " heading) so a re-run replaces it in place
         insert_at = lines.index(SUMMARY_HEAD)
         end = next((j for j in range(insert_at + 1, len(lines)) if lines[j].startswith("## ")), len(lines))
@@ -84,10 +85,12 @@ def main() -> None:
                "Pass if the score is 2 or more, partial if above 0, fail if 0. Judged without looking at the stats; "
                "see `notes/sanity_judgements.md`.", "", *table, ""]
     lines[insert_at:insert_at] = section
-    REPORT.write_text("\n".join(lines).rstrip("\n") + "\n")
+    report.write_text("\n".join(lines).rstrip("\n") + "\n")
     print("\n".join(table))
-    print(f"Wrote {REPORT}")
+    print(f"Wrote {report}")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Fill the Judgement column of a sanity-comps report.")
+    parser.add_argument("--report", type=Path, default=REPORT, help="report to score (default: reports/phase2_baselines.md)")
+    main(parser.parse_args().report.resolve())
