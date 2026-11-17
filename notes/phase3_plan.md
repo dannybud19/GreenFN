@@ -80,4 +80,4 @@ Results are reported as mean and spread over the 3 seeds.
 
 | Date | Change | Reason |
 |---|---|---|
-| | | |
+| 17 Nov 2026 | Claude writes src/encoder_data.py and src/encoder.py; Danny reviews each step | Changed from Danny writing steps 3 to 6, to keep momentum |
