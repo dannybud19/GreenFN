@@ -256,5 +256,5 @@ Human judgements from `config/sanity_marks.json` (fair = 1, partial = 0.5, wrong
 
 - **B2 cosine is the strongest baseline.** It has the best sanity record (6 pass, 1 fail, mean 1.70 out of 5) and is the only baseline to beat persistence on next-season error (-0.4%).
 - **Era leakage is at chance for every baseline** (0.186 to 0.190 against 0.200). Within-season z-scores already remove the decade signal that a linear probe can see. Phase 4's era goal needs revisiting: use a nonlinear probe, or re-check after the encoder.
-- **Known-pair test (each player in the other's top 5):** Shaq and Howard pass almost everywhere; Jordan and Kobe pass only under B2; Nash and Paul fail everywhere. This is stricter than the sanity verdicts, where Jordan's own top 5 passes under every model because Kobe or other fair comps appear in it.
+- **Known-pair test (each player in the other's top 5):** Shaq and Howard pass almost everywhere; Jordan and Kobe pass only under B2; Nash and Paul fail everywhere. This is stricter than the sanity verdicts, where Jordan's own top 5 passes under every model because Kobe (the one fair comp) or several partial comps appear in it.
 - **Most comps are role players** who share the star's stat shape but not his level or role. That is the gap Phase 3 has to close.
