@@ -1,5 +1,5 @@
 {
-  "_about": "Human judgements of the Phase 2 baseline comps (B1 to B4 top 5). fair = 1 point, partial = 0.5, wrong = 0. Judged by Danny on 17 Nov 2026: his own opinion first, then researched external consensus (articles, forums) for the rest, each reviewed and confirmed by him. Stats were not used to judge. See notes/sanity_judgements.md.",
+  "_about": "Human judgements of the Phase 2 baseline comps (B1 to B4 top 5). fair = 1 point, partial = 0.5, wrong = 0. Judged by Danny on 17 Nov 2026: his own opinion first, then researched external consensus (articles, forums) for the rest, each reviewed and confirmed by him. Stats were not used to judge. See notes/sanity_judgements.md. Phase 3 encoder comps (27 names, 17 Nov 2026) were marked by Claude from researched consensus at Danny's request (he delegated these), using the same rules: never the stats.",
   "aliases": {
     "Anfernee Hardaway": "Penny Hardaway"
   },
@@ -7,6 +7,8 @@
     "Kareem Abdul-Jabbar": {
       "fair": [],
       "partial": [
+        "Chris Bosh",
+        "Elton Brand",
         "Kevin McHale",
         "Patrick Ewing",
         "Robert Parish"
@@ -20,6 +22,7 @@
         "Mark Blount",
         "Melvin Turpin",
         "Nenad Krstić",
+        "Obi Toppin",
         "Pat Cummings",
         "Predrag Drobnjak",
         "Rasheed Wallace",
@@ -49,6 +52,7 @@
     "Larry Bird": {
       "fair": [],
       "partial": [
+        "Antoine Walker",
         "Glenn Robinson",
         "Jayson Tatum",
         "Kawhi Leonard",
@@ -68,7 +72,8 @@
         "Penny Hardaway",
         "Rashard Lewis",
         "Rudy Gay",
-        "Scottie Pippen"
+        "Scottie Pippen",
+        "Tyler Herro"
       ]
     },
     "Isiah Thomas": {
@@ -78,6 +83,7 @@
       "partial": [
         "Brandon Jennings",
         "Derek Harper",
+        "Kenny Anderson",
         "Stephon Marbury",
         "T.J. Ford"
       ],
@@ -88,8 +94,10 @@
         "Eddie Johnson",
         "Greg Anthony",
         "Jrue Holiday",
+        "Kelvin Ransey",
         "Larry Drew",
-        "Monta Ellis"
+        "Monta Ellis",
+        "Robert Pack"
       ]
     },
     "Charles Barkley": {
@@ -98,6 +106,8 @@
         "Shawn Kemp"
       ],
       "partial": [
+        "Buck Williams",
+        "Domantas Sabonis",
         "Karl Malone",
         "Kenneth Faried",
         "Paul Millsap"
@@ -108,6 +118,7 @@
         "Jalen Duren",
         "Joakim Noah",
         "Julius Erving",
+        "Kevin Garnett",
         "Marc Gasol",
         "Nenê",
         "Steve Johnson",
@@ -124,7 +135,9 @@
         "Dominique Wilkins",
         "Dwyane Wade",
         "George Gervin",
+        "Grant Hill",
         "Kawhi Leonard",
+        "LeBron James",
         "Shai Gilgeous-Alexander",
         "Tracy McGrady"
       ],
@@ -139,10 +152,12 @@
         "Chris Paul"
       ],
       "partial": [
+        "Andre Miller",
         "Brevin Knight",
         "Deron Williams",
         "José Calderón",
         "Magic Johnson",
+        "Maurice Cheeks",
         "Terry Porter"
       ],
       "wrong": [
@@ -157,10 +172,13 @@
       ]
     },
     "Dennis Rodman": {
-      "fair": [],
+      "fair": [
+        "Reggie Evans"
+      ],
       "partial": [
         "Charles Oakley",
         "Dale Davis",
+        "Jamie Feick",
         "Jeff Foster",
         "Larry Smith",
         "Michael Cage"
@@ -208,9 +226,11 @@
         "Erick Strickland",
         "Howard Eisley",
         "Hubert Davis",
+        "Jameer Nelson",
         "Jarrett Jack",
         "Jordan Farmar",
         "Kenny Smith",
+        "Kirk Hinrich",
         "Matthew Dellavedova",
         "Mike Iuzzolino",
         "Patty Mills",
@@ -226,7 +246,8 @@
         "Bradley Beal",
         "Donovan Mitchell",
         "Gilbert Arenas",
-        "Kawhi Leonard"
+        "Kawhi Leonard",
+        "Paul Pierce"
       ],
       "wrong": [
         "Danny Granger",
@@ -254,6 +275,7 @@
         "Caris LeVert",
         "De'Aaron Fox",
         "Dejounte Murray",
+        "Ja Morant",
         "Monta Ellis",
         "Ricky Davis"
       ]
@@ -272,13 +294,17 @@
       ],
       "wrong": [
         "Jameer Nelson",
+        "Jordan Farmar",
         "Kyle Lowry",
         "Manu Ginóbili",
+        "Mike James",
         "Mo Williams"
       ]
     },
     "Draymond Green": {
-      "fair": [],
+      "fair": [
+        "Scottie Pippen"
+      ],
       "partial": [
         "Kevin Garnett",
         "Paul Millsap",
@@ -291,6 +317,7 @@
         "Carey Scurry",
         "Chris Singleton",
         "Coby Dietrick",
+        "Cody Martin",
         "Deni Avdija",
         "Earl Watson",
         "George Lynch",
@@ -298,6 +325,7 @@
         "Nate McMillan",
         "Nemanja Bjelica",
         "Onyeka Okongwu",
+        "Rich Kelley",
         "Stanley Johnson",
         "Taylor Hendricks",
         "Walter McCarty"
@@ -315,6 +343,7 @@
         "LeBron James"
       ],
       "wrong": [
+        "Charles Barkley",
         "Christian Laettner",
         "Frank Brickowski",
         "Gorgui Dieng",

@@ -62,3 +62,24 @@ Score = sum over a model's top 5 (0 to 5). **Pass** if 2 or more, **partial** if
 - Next Kobe lists: [Sportskeeda](https://sportskeeda.com/basketball/who-s-next-kobe-bryant-looking-5-nba-players-can-emulate-la-lakers-legend); SGA and Jordan: [Bolavip (Tracy McGrady)](https://bolavip.com/en/nba/magic-legend-tracy-mcgrady-makes-bold-comparison-between-shai-gilgeous-alexander-and-nba-michael-jordan-and-kobe-bryant)
 
 Many ✗ marks on role players are judgement calls (no published comparison exists), not sourced claims.
+
+## Phase 3 addendum (17 Nov 2026)
+
+The Phase 3 encoder (embedding size 32, temperature 0.05, pretraining, seed 2026) brought 27 comp names that weren't yet marked (`reports/phase3_unmarked_comps.json`). **Danny delegated these to Claude**, so unlike the Phase 2 marks they were not reviewed by him. Same rules: researched consensus first, playing style when no comparison exists, never the stats.
+
+| Mark | Names |
+|---|---|
+| ✓ fair | Reggie Evans (Rodman), Scottie Pippen (Draymond) |
+| ~ partial | Chris Bosh, Elton Brand (Kareem); Antoine Walker (Bird); Kenny Anderson (Isiah); Buck Williams, Domantas Sabonis (Barkley); LeBron James, Grant Hill (Jordan); Maurice Cheeks, Andre Miller (Stockton); Jamie Feick (Rodman); Paul Pierce (Kobe) |
+| ✗ wrong | Obi Toppin (Kareem); Tyler Herro (Bird); Kelvin Ransey, Robert Pack (Isiah); Kevin Garnett (Barkley); Kirk Hinrich, Jameer Nelson (Nash); Ja Morant (LeBron); Mike James, Jordan Farmar (Curry); Rich Kelley, Cody Martin (Draymond); Charles Barkley (Jokic) |
+
+Result: encoder 8 pass, 6 partial, 1 fail (mean 1.80) against B2's 6 / 8 / 1 (mean 1.70). Because Claude marked the encoder-only names, treat this comparison as less independent than Phase 2's; Danny can overrule any mark on the comp-check page.
+
+Sources for the ✓ marks and the Grant Hill partial:
+- Reggie Evans and Rodman: [Hoops Habit](https://hoopshabit.com/2013/04/30/brooklyn-nets-is-reggie-evans-turning-into-todays-dennis-rodman), [Nets Takeover (Gerald Wallace's comparison)](https://netstakeover.blogspot.com/2013/12/gerald-wallace-compares-reggie-evans-to.html)
+- Draymond and Pippen: [NBC Sports Bay Area (Steve Kerr)](https://nbcsportsbayarea.com/nba/golden-state-warriors/steve-kerr-compares-draymond-green-scottie-pippen-dennis-rodman/1836762)
+- Grant Hill as "the next Jordan": [Mitch Albom](https://www.mitchalbom.com/heir-vs-airthe-next-jordan-goes-up-against-the-original/), [IBTimes](https://www.ibtimes.com/five-players-who-were-hailed-next-michael-jordan-3147418)
+- Paul Pierce and Kobe as rivals: [Bleacher Report](https://bleacherreport.com/articles/532807-paul-pierce-and-kobe-bryant-the-truth-and-the-mamba)
+
+The other partial and wrong marks have no published comparison; they are judgement calls on playing style.
+
