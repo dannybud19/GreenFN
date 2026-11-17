@@ -81,3 +81,5 @@ Results are reported as mean and spread over the 3 seeds.
 | Date | Change | Reason |
 |---|---|---|
 | 17 Nov 2026 | Claude writes src/encoder_data.py and src/encoder.py; Danny reviews each step | Changed from Danny writing steps 3 to 6, to keep momentum |
+| 17 Nov 2026 | Clarified: the Stage A check compares the pooled masked MSE against predicting 0 for every masked feature (one baseline), not each feature separately | Wording in section 3 was ambiguous; the pooled check is what was intended and what encoder.py does |
+| 17 Nov 2026 | The 27 encoder-only sanity comp names were marked by Claude from researched consensus, not by Danny | Danny delegated them; recorded in notes/sanity_judgements.md |
