@@ -1,0 +1,327 @@
+{
+  "_about": "Human judgements of the Phase 2 baseline comps (B1 to B4 top 5). fair = 1 point, partial = 0.5, wrong = 0. Judged by Danny on 17 Nov 2026: his own opinion first, then researched external consensus (articles, forums) for the rest, each reviewed and confirmed by him. Stats were not used to judge. See notes/sanity_judgements.md.",
+  "aliases": {
+    "Anfernee Hardaway": "Penny Hardaway"
+  },
+  "players": {
+    "Kareem Abdul-Jabbar": {
+      "fair": [],
+      "partial": [
+        "Kevin McHale",
+        "Patrick Ewing",
+        "Robert Parish"
+      ],
+      "wrong": [
+        "Al Horford",
+        "Brad Sellers",
+        "Chucky Brown",
+        "Herb Williams",
+        "Joe Barry Carroll",
+        "Mark Blount",
+        "Melvin Turpin",
+        "Nenad Krstić",
+        "Pat Cummings",
+        "Predrag Drobnjak",
+        "Rasheed Wallace",
+        "Roy Hinson",
+        "Terrence Jones",
+        "Terry Mills",
+        "Terry Tyler"
+      ]
+    },
+    "Magic Johnson": {
+      "fair": [
+        "Penny Hardaway"
+      ],
+      "partial": [
+        "Andre Miller",
+        "Deron Williams",
+        "James Harden",
+        "John Stockton"
+      ],
+      "wrong": [
+        "Kevin Johnson",
+        "Reggie Theus",
+        "Rod Strickland",
+        "Sam Cassell"
+      ]
+    },
+    "Larry Bird": {
+      "fair": [],
+      "partial": [
+        "Glenn Robinson",
+        "Jayson Tatum",
+        "Kawhi Leonard",
+        "Kevin Durant",
+        "Khris Middleton",
+        "Ray Allen",
+        "Stephen Curry"
+      ],
+      "wrong": [
+        "Clyde Drexler",
+        "Desmond Bane",
+        "Dominique Wilkins",
+        "Jamal Murray",
+        "Julius Erving",
+        "Kobe Bryant",
+        "Kyrie Irving",
+        "Penny Hardaway",
+        "Rashard Lewis",
+        "Rudy Gay",
+        "Scottie Pippen"
+      ]
+    },
+    "Isiah Thomas": {
+      "fair": [
+        "Tim Hardaway"
+      ],
+      "partial": [
+        "Brandon Jennings",
+        "Derek Harper",
+        "Stephon Marbury",
+        "T.J. Ford"
+      ],
+      "wrong": [
+        "D'Angelo Russell",
+        "Dennis Schröder",
+        "Deron Williams",
+        "Eddie Johnson",
+        "Greg Anthony",
+        "Jrue Holiday",
+        "Larry Drew",
+        "Monta Ellis"
+      ]
+    },
+    "Charles Barkley": {
+      "fair": [
+        "Clarence Weatherspoon",
+        "Shawn Kemp"
+      ],
+      "partial": [
+        "Karl Malone",
+        "Kenneth Faried",
+        "Paul Millsap"
+      ],
+      "wrong": [
+        "Bison Dele",
+        "Chris Gatling",
+        "Jalen Duren",
+        "Joakim Noah",
+        "Julius Erving",
+        "Marc Gasol",
+        "Nenê",
+        "Steve Johnson",
+        "Tiago Splitter",
+        "Tyrone Hill"
+      ]
+    },
+    "Michael Jordan": {
+      "fair": [
+        "Kobe Bryant"
+      ],
+      "partial": [
+        "Clyde Drexler",
+        "Dominique Wilkins",
+        "Dwyane Wade",
+        "George Gervin",
+        "Kawhi Leonard",
+        "Shai Gilgeous-Alexander",
+        "Tracy McGrady"
+      ],
+      "wrong": [
+        "Caris LeVert",
+        "Carmelo Anthony",
+        "James Worthy"
+      ]
+    },
+    "John Stockton": {
+      "fair": [
+        "Chris Paul"
+      ],
+      "partial": [
+        "Brevin Knight",
+        "Deron Williams",
+        "José Calderón",
+        "Magic Johnson",
+        "Terry Porter"
+      ],
+      "wrong": [
+        "Allen Leavell",
+        "Darrell Armstrong",
+        "Doc Rivers",
+        "Elliot Perry",
+        "Eric Snow",
+        "Micheal Williams",
+        "Paul Pressey",
+        "Spud Webb"
+      ]
+    },
+    "Dennis Rodman": {
+      "fair": [],
+      "partial": [
+        "Charles Oakley",
+        "Dale Davis",
+        "Jeff Foster",
+        "Larry Smith",
+        "Michael Cage"
+      ],
+      "wrong": [
+        "Andris Biedriņš",
+        "Cliff Levingston",
+        "Keith Closs",
+        "Kevin Willis",
+        "Larry Micheaux",
+        "Luke Kornet",
+        "Major Jones",
+        "Nazr Mohammed",
+        "Tim Perry",
+        "Trevor Booker",
+        "Žan Tabak"
+      ]
+    },
+    "Shaquille O'Neal": {
+      "fair": [
+        "Dwight Howard"
+      ],
+      "partial": [
+        "Alonzo Mourning",
+        "Eddy Curry",
+        "Tim Duncan"
+      ],
+      "wrong": [
+        "Chris Gatling",
+        "Otis Thorpe",
+        "Steve Johnson"
+      ]
+    },
+    "Steve Nash": {
+      "fair": [
+        "Mark Price"
+      ],
+      "partial": [
+        "José Calderón"
+      ],
+      "wrong": [
+        "Anthony Goldwire",
+        "Bogdan Bogdanović",
+        "Dana Barros",
+        "Erick Strickland",
+        "Howard Eisley",
+        "Hubert Davis",
+        "Jarrett Jack",
+        "Jordan Farmar",
+        "Kenny Smith",
+        "Matthew Dellavedova",
+        "Mike Iuzzolino",
+        "Patty Mills",
+        "Seth Curry",
+        "Steve Blake"
+      ]
+    },
+    "Kobe Bryant": {
+      "fair": [
+        "Michael Jordan"
+      ],
+      "partial": [
+        "Bradley Beal",
+        "Donovan Mitchell",
+        "Gilbert Arenas",
+        "Kawhi Leonard"
+      ],
+      "wrong": [
+        "Danny Granger",
+        "David Thompson",
+        "Glenn Robinson",
+        "Gordon Hayward",
+        "Khris Middleton",
+        "Michael Redd",
+        "Norman Powell",
+        "Richard Jefferson",
+        "Russell Westbrook"
+      ]
+    },
+    "LeBron James": {
+      "fair": [],
+      "partial": [
+        "Dwyane Wade",
+        "Grant Hill",
+        "Luka Dončić",
+        "Michael Jordan",
+        "Toni Kukoč",
+        "Tracy McGrady"
+      ],
+      "wrong": [
+        "Caris LeVert",
+        "De'Aaron Fox",
+        "Dejounte Murray",
+        "Monta Ellis",
+        "Ricky Davis"
+      ]
+    },
+    "Stephen Curry": {
+      "fair": [
+        "Damian Lillard",
+        "Mark Price"
+      ],
+      "partial": [
+        "Darius Garland",
+        "Jamal Murray",
+        "Jeff Hornacek",
+        "Kyrie Irving",
+        "Ray Allen"
+      ],
+      "wrong": [
+        "Jameer Nelson",
+        "Kyle Lowry",
+        "Manu Ginóbili",
+        "Mo Williams"
+      ]
+    },
+    "Draymond Green": {
+      "fair": [],
+      "partial": [
+        "Kevin Garnett",
+        "Paul Millsap",
+        "Paul Pressey",
+        "Robert Horry"
+      ],
+      "wrong": [
+        "Al-Farouq Aminu",
+        "Anthony Carter",
+        "Carey Scurry",
+        "Chris Singleton",
+        "Coby Dietrick",
+        "Deni Avdija",
+        "Earl Watson",
+        "George Lynch",
+        "Junior Harrington",
+        "Nate McMillan",
+        "Nemanja Bjelica",
+        "Onyeka Okongwu",
+        "Stanley Johnson",
+        "Taylor Hendricks",
+        "Walter McCarty"
+      ]
+    },
+    "Nikola Jokić": {
+      "fair": [
+        "Arvydas Sabonis",
+        "Vlade Divac"
+      ],
+      "partial": [
+        "Alvan Adams",
+        "Domantas Sabonis",
+        "Greg Monroe",
+        "LeBron James"
+      ],
+      "wrong": [
+        "Christian Laettner",
+        "Frank Brickowski",
+        "Gorgui Dieng",
+        "Kelly Olynyk",
+        "Kevin Garnett",
+        "Paul Millsap"
+      ]
+    }
+  }
+}

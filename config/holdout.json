@@ -1,0 +1,10 @@
+{
+  "description": "Hold-out players from the feature note's sanity-check list (marked with a dagger). Never used for tuning; only looked at for final evaluation.",
+  "players": [
+    {"player_id": "olajuha01", "player": "Hakeem Olajuwon"},
+    {"player_id": "iversal01", "player": "Allen Iverson"},
+    {"player_id": "nowitdi01", "player": "Dirk Nowitzki"},
+    {"player_id": "rosede01", "player": "Derrick Rose"},
+    {"player_id": "antetgi01", "player": "Giannis Antetokounmpo"}
+  ]
+}

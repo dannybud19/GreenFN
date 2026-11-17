@@ -19,6 +19,17 @@ Qualified players per season run from 228 (1980) to 379 (2026), median 322. The 
 | 2010s | 331 | 338 | 352 | 344 | 337 | 366 | 350 | 355 | 353 | 361 |
 | 2020s | 355 | 371 | 375 | 367 | 360 | 375 | 379 | | | |
 
+## Raw data checksums
+
+SHA-256 of the raw CSVs the build reads, from the Kaggle download of 2026-10-22. `src/build_dataset.py` checks them at load and stops with "raw data changed; re-check counts and update the data card" if any differs.
+
+| File | SHA-256 |
+|---|---|
+| `Per 100 Poss.csv` | `c132dc9b958e213d05e1c93fe5cf2b656a613626479b3f3fc4a88e0037a7e175` |
+| `Advanced.csv` | `e1616ffe7759c22b014cbbb7c7ce10a591615e7ef1e08cc0dba4d2a02872948d` |
+| `Player Totals.csv` | `1c081cd7f9c694755ea2210c3426e709540afedc31c1bf781456f3df4b7582b2` |
+| `Player Career Info.csv` | `4abda6b51da399a154f7118eed7f0775c73b1335dae5c0d7bc41088da871b9f5` |
+
 ## Features
 
 **Style features (model inputs).** Every one is complete for qualified rows from 1980 on. "First season" is the first NBA season the stat appears in the raw data, which matters for the pre-1980 v2.
@@ -53,7 +64,7 @@ Qualified players per season run from 228 (1980) to 379 (2026), median 322. The 
 
 - **Shortened seasons.** Qualified means `mp >= 500 × games / 82`. That's 305 minutes in 1999 (50 games), 402 in 2012 (66), and 439 in 2020 and 2021 (72).
 - **Traded players.** Each player-season keeps the `xTM` aggregate row. `n_teams` and `teams` (e.g. `IND/PHI`) come from the per-team rows, which are then dropped. 2,318 player-seasons are multi-team, and 1,506 of those are qualified. By team count: 2 teams 2,163, 3 teams 148, 4 teams 6, 5 teams 1. Three or more teams usually means a mix of trades, waivers and short contracts, not only trades.
-- **Shrinkage priors.** `shrunk = (made + k × league%) / (attempts + k)`, with k = 100 for 3P%, 100 for 2P% and 50 for FT%. These are the starting values from the feature note, still to be tuned. League% is the season's total makes over total attempts, not an average of player percentages. Players with 0 attempts get the league average, which is how the 2,858 empty 3P% rows are filled (0.280 in 1980, 0.360 in 2026).
+- **Shrinkage priors.** `shrunk = (made + k × league%) / (attempts + k)`, with k = 50 for 3P%, 200 for 2P% and 25 for FT%. These were tuned in Phase 2 by year-to-year predictiveness on training players (see `reports/shrinkage_tuning.md`). League% is the season's total makes over total attempts, not an average of player percentages. Players with 0 attempts get the league average, which is how the 2,858 empty 3P% rows are filled (0.280 in 1980, 0.360 in 2026).
 - **z-scores.** Minutes-weighted within each season. Each season's average and spread come from qualified rows only, then every row is scored against them. Unqualified rows can have extreme z values and shouldn't be compared with qualified ones.
 - **Remaining nulls are all in unqualified rows.**
   - Three player-seasons have 0 minutes and every stat empty: Alex Scales 2006, JamesOn Curry 2010 and Damion James 2013.
@@ -70,7 +81,7 @@ Z-scores for qualified seasons, checked against what's expected for each player.
 |---|---|---|---|
 | Dennis Rodman | `z_orb_percent` | 2.5 to 3.9 every season from 1987 to 1998 | Pass: extreme |
 | John Stockton | `z_ast_percent` | 3.0 to 4.1 every season from 1987 to 2003 (2.2 and 2.8 in his first two years) | Pass: stays high |
-| Shaquille O'Neal | `z_ft_percent_shrunk` | −1.9 to −3.8 in all 19 seasons | Pass |
+| Shaquille O'Neal | `z_ft_percent_shrunk` | −1.7 to −3.5 in all 19 seasons | Pass |
 | Nikola Jokić | `z_ast_percent` | Climbs from 0.3 (2016) to 3.8 (2026) | Pass |
 | Stephen Curry | `x3p_ar` / `z_x3p_ar` | Raw rate climbs from 0.33 (2010) to 0.62 (2025). z climbs from 0.6 to 1.4 by 2016, then holds around 1.0 | Pass, see below |
 
