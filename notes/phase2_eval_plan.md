@@ -99,4 +99,4 @@ Plus the box-score correlation table and the sanity report.
 
 | Date | Change | Reason |
 |---|---|---|
-| | | |
+| 17 Nov 2026 | Sanity verdicts scored from human marks: fair = 1, partial = 0.5, wrong = 0, summed over the top 5; pass >= 2, partial > 0, fail = 0. Marks in config/sanity_marks.json, applied by src/score_sanity.py (re-run after evaluate.py). | Section 5 said pass/partial/fail without a rule. Comps are judged by opinion and external consensus, never by the stats, to avoid circularity. |
