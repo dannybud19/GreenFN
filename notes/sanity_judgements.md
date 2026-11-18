@@ -83,3 +83,23 @@ Sources for the ✓ marks and the Grant Hill partial:
 
 The other partial and wrong marks have no published comparison; they are judgement calls on playing style.
 
+## Phase 4 addendum (18 Nov 2026)
+
+Five new comp names from the Phase 4 models, marked by Claude (delegated by Danny), same rules.
+
+| Name | For | Mark | Basis |
+|---|---|---|---|
+| Tyrese Haliburton | Magic Johnson | ~ | Compared to Magic by Tracy McGrady, and Magic gave him a nickname; but a 6'5" guard, not a 6'9" point guard |
+| Tyson Chandler | Dennis Rodman | ~ | Studied Rodman's rebounding; a shot-blocking centre rather than a rebounding forward |
+| Stanley Roberts | Shaquille O'Neal | ~ | Huge low-post centre (Shaq's LSU teammate), nowhere near his level; same call as Eddy Curry |
+| Bernard King | Kobe Bryant | ~ | Elite volume-scoring wing, but a forward from an earlier era |
+| Karl Malone | Nikola Jokic | ✗ | Scoring power forward, not a passing centre |
+
+Result: chosen model (season centring, alpha 0.5) 8 pass, 7 partial, 0 fail, mean 1.87.
+
+Sources:
+- [Yardbarker: Tracy McGrady compares Haliburton to Magic Johnson](https://www.yardbarker.com/nba/articles/tracy_mcgrady_compares_tyrese_haliburton_to_magic_johnson_but_urges_pacers_guard_to_follow_jason_kidds_footsteps_to_superstardom/s1_17667_42384017)
+- [8 Points, 9 Seconds: Magic Johnson's nickname for Haliburton](https://8points9seconds.com/tyrese-haliburton-magic-johnson-starting-5-netflix)
+- [The SportsRush: Tyson Chandler studied Rodman's rebounding](https://thesportsrush.com/nba-news-en-route-to-187576101-career-mavericks-legend-studied-dennis-rodmans-manic-rebounding-and-learned-to-crash-the-boards/)
+- [RealGM: Bernard King, the NBA's invisible genius](https://basketball.realgm.com/article/227128/Bernard-King-The-NBAs-Invisible-Genius)
+

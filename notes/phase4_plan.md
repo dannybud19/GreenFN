@@ -85,4 +85,4 @@ Results are mean and spread over 3 seeds. Sanity comps and known pairs use the s
 
 | Date | Change | Reason |
 |---|---|---|
-| | | |
+| 18 Nov 2026 | The 5 new sanity comp names were marked by Claude from researched consensus, not by Danny | Danny delegated them, as in Phase 3; recorded in notes/sanity_judgements.md |
