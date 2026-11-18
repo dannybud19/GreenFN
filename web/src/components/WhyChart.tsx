@@ -7,11 +7,11 @@ type Props = {
   bName: string;
 };
 
-const W = 480;
+const W = 500;
 const ROW = 26;
 const LABEL_W = 150;
 const ZERO = 320;
-const HALF = 130;
+const HALF = 120;
 
 /** Diverging horizontal bars, sorted by value. Positive (accent) = makes the pair more alike; negative (hatched) = less alike. */
 export function WhyChart({ labels, values, aName, bName }: Props) {
@@ -70,25 +70,27 @@ export function WhyChart({ labels, values, aName, bName }: Props) {
           );
         })}
       </svg>
-      <table className="sr-only">
-        <caption>
-          Why {aName} and {bName} are similar, by stat
-        </caption>
-        <thead>
-          <tr>
-            <th>Stat</th>
-            <th>Effect on similarity</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.label}>
-              <td>{r.label}</td>
-              <td>{fmt(r.v)}</td>
+      <div className="sr-only">
+        <table>
+          <caption>
+            Why {aName} and {bName} are similar, by stat
+          </caption>
+          <thead>
+            <tr>
+              <th>Stat</th>
+              <th>Effect on similarity</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.label}>
+                <td>{r.label}</td>
+                <td>{fmt(r.v)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }
