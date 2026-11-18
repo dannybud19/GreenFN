@@ -9,8 +9,11 @@ async function readJson<T>(...parts: string[]): Promise<T> {
   return JSON.parse(await readFile(path.join(DATA_DIR, ...parts), "utf8")) as T;
 }
 
-export const loadPlayers = () => readJson<PlayerRow[]>("players.json");
-export const loadMeta = () => readJson<Meta>("meta.json");
+// players.json and meta.json are read by every page at build time, so keep one copy in memory.
+let playersMemo: Promise<PlayerRow[]> | null = null;
+let metaMemo: Promise<Meta> | null = null;
+export const loadPlayers = () => (playersMemo ??= readJson<PlayerRow[]>("players.json"));
+export const loadMeta = () => (metaMemo ??= readJson<Meta>("meta.json"));
 export const loadProfiles = () => readJson<Profiles>("profiles.json");
 export const loadParity = () => readJson<Record<string, string[]>>("parity.json");
 
