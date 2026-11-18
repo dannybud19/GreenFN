@@ -74,4 +74,5 @@ with alpha 0.25 and beta 0.75 (from `profiles.json`), the scales from `profiles.
 
 | Date | Change | Reason |
 |---|---|---|
-| | | |
+| 18 Nov 2026 | App built with cacheComponents and partialPrefetching turned off in `web/next.config.ts` (create-next-app enables them by default), so player pages are plain static generation via generateStaticParams | The plan says pages are statically generated from `public/data/`; Cache Components makes uncached data dynamic by default |
+| 18 Nov 2026 | `.gitignore` gets an exception so `web/public/data/` is committed; `@types/node` raised to ^24 in `web/` | The root `data/` rule also matched `web/public/data/`; vitest 5.1.0 does not accept @types/node ^20 |
