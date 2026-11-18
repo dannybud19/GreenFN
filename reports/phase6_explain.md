@@ -18,7 +18,7 @@ Explanations computed: 12,335 pairs (2,467 players x top 5).
 |---|---|
 | Completeness error (attributions vs score change), mean | 0.106% |
 | Completeness error, max | 2.329% |
-| Pairs with completeness error under 1% | 100.0% |
+| Pairs with completeness error under 1% | 12,331 of 12,335 (99.97%) |
 | Deletion test: mean score drop, top-3 credited features set to average | 0.754 |
 | Deletion test: mean score drop, 3 random features | 0.224 |
 | Pairs where the top 3 matter more than random | 100.0% (of 300) |
