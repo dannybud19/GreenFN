@@ -1,0 +1,57 @@
+{
+  "features": [
+    "fga_per_100_poss",
+    "x3p_ar",
+    "f_tr",
+    "ts_percent",
+    "x3p_percent_shrunk",
+    "x2p_percent_shrunk",
+    "ft_percent_shrunk",
+    "usg_percent",
+    "ast_percent",
+    "tov_percent",
+    "orb_percent",
+    "drb_percent",
+    "stl_percent",
+    "blk_percent",
+    "pf_per_100_poss"
+  ],
+  "labels": [
+    "Shot volume",
+    "Three-point rate",
+    "Free-throw rate",
+    "True shooting",
+    "Three-point %",
+    "Two-point %",
+    "Free-throw %",
+    "Usage",
+    "Assists",
+    "Turnovers",
+    "Offensive rebounding",
+    "Defensive rebounding",
+    "Steals",
+    "Blocks",
+    "Fouls"
+  ],
+  "model": {
+    "encoder": "models/phase4/adversary_lambda0.0_s2026.pt",
+    "centring_alpha": 0.5,
+    "career_score": {
+      "alpha": 0.25,
+      "beta": 0.75,
+      "lambda": 0.0
+    },
+    "scales": {
+      "centre": 0.34800352953403246,
+      "peak": 0.338219991436537,
+      "spread": 0.027495528189320773
+    }
+  },
+  "counts": {
+    "players": 2467,
+    "seasons": 14672,
+    "players_explained": 2467
+  },
+  "exportsCreated": "2026-11-18T01:48:04+00:00",
+  "attribution": "Statistics from Basketball Reference via the Kaggle dataset sumitrodatta/nba-aba-baa-stats. Comps, breakdowns and map are GreenFN's own model outputs."
+}
