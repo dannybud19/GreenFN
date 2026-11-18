@@ -15,3 +15,19 @@ uv run python src/build_dataset.py       # -> data/processed/player_seasons.parq
 ## Layout
 
 `data/raw`, `data/processed` (git-ignored) · `src/` pipeline code · `notebooks/` exploration · `notes/` decisions and data notes · `models/` (git-ignored) · `api/` · `web/`
+
+## Run the app
+
+The app (`web/`) is a Next.js site that reads precomputed files, so it needs no Python server. Regenerate its data, then start it:
+
+```bash
+source .venv/bin/activate
+python src/precompute.py                 # -> exports/ (git-ignored), about a minute
+python src/export_web.py                 # -> web/public/data/ (committed)
+cd web && npm install && npm run dev     # http://localhost:3000
+```
+
+Other checks: `npm test` (Vitest, including the parity test against the Python top 10), `npm run build` (static build, one page per player) and `npm start` to serve that build.
+
+**Deploy on Vercel:** import the GitHub repo and set the root directory to `web`. Confirm first that the Kaggle dataset's licence allows publishing derived outputs (comps, scores, breakdowns and map points; no raw stat tables are published).
+
