@@ -90,16 +90,36 @@ Five new comp names from the Phase 4 models, marked by Claude (delegated by Dann
 | Name | For | Mark | Basis |
 |---|---|---|---|
 | Tyrese Haliburton | Magic Johnson | ~ | Compared to Magic by Tracy McGrady, and Magic gave him a nickname; but a 6'5" guard, not a 6'9" point guard |
-| Tyson Chandler | Dennis Rodman | ~ | Studied Rodman's rebounding; a shot-blocking centre rather than a rebounding forward |
+| Tyson Chandler | Dennis Rodman | ✓ | Claude suggested ~ (studied Rodman's rebounding, but a shot-blocking centre); **Danny overrode it to ✓ on 18 Nov** |
 | Stanley Roberts | Shaquille O'Neal | ~ | Huge low-post centre (Shaq's LSU teammate), nowhere near his level; same call as Eddy Curry |
 | Bernard King | Kobe Bryant | ~ | Elite volume-scoring wing, but a forward from an earlier era |
 | Karl Malone | Nikola Jokic | ✗ | Scoring power forward, not a passing centre |
 
-Result: chosen model (season centring, alpha 0.5) 8 pass, 7 partial, 0 fail, mean 1.87.
+Result: chosen model (season centring, alpha 0.5) 8 pass, 7 partial, 0 fail, mean 1.90 after Danny's override (1.87 before).
 
 Sources:
 - [Yardbarker: Tracy McGrady compares Haliburton to Magic Johnson](https://www.yardbarker.com/nba/articles/tracy_mcgrady_compares_tyrese_haliburton_to_magic_johnson_but_urges_pacers_guard_to_follow_jason_kidds_footsteps_to_superstardom/s1_17667_42384017)
 - [8 Points, 9 Seconds: Magic Johnson's nickname for Haliburton](https://8points9seconds.com/tyrese-haliburton-magic-johnson-starting-5-netflix)
 - [The SportsRush: Tyson Chandler studied Rodman's rebounding](https://thesportsrush.com/nba-news-en-route-to-187576101-career-mavericks-legend-studied-dennis-rodmans-manic-rebounding-and-learned-to-crash-the-boards/)
 - [RealGM: Bernard King, the NBA's invisible genius](https://basketball.realgm.com/article/227128/Bernard-King-The-NBAs-Invisible-Genius)
+
+## Phase 5 addendum (18 Nov 2026)
+
+27 new names from the career-level comps, marked by Claude (delegated by Danny), same rules.
+
+| Mark | Names |
+|---|---|
+| ✓ fair | Tyrese Haliburton (Nash), Zion Williamson (Shaq), Anthony Edwards (Kobe) |
+| ~ partial | Pau Gasol (Kareem); Steve Nash (Magic); Baron Davis (Isiah); Jeff Ruland (Barkley); Donovan Mitchell (Jordan); Kevin Porter (Stockton); Joey Dorsey, Michael Smith (Rodman); Amar'e Stoudemire (Shaq); Scott Skiles (Nash); Kyle Anderson (Draymond); DeMarcus Cousins, Joel Embiid (Jokic) |
+| ✗ wrong | Larry Nance (Kareem); Kemba Walker (Bird); Ray Williams (Isiah); Nikola Jokic (Barkley); Kevin Johnson (Stockton); Shai Gilgeous-Alexander (LeBron); Reggie Theus, Sam Cassell (Curry); Carlos Terry, Juan Toscano-Anderson, Vlade Divac (Draymond) |
+
+Result: chosen career score 11 pass, 4 partial, 0 fail, mean 2.17.
+
+Sources for the ✓ marks and Kyle Anderson:
+- [TrueHoop: Is Tyrese Haliburton the new Steve Nash?](https://www.truehoop.com/p/is-tyrese-haliburton-the-new-steve)
+- [Yahoo Sports: Zion Williamson is the Shaquille O'Neal of the small-ball era](https://sports.yahoo.com/zion-williamson-is-the-shaquille-oneal-of-nba-small-ball-221842083.html)
+- [The Ringer: Zion Williamson and Shaquille O'Neal](https://www.theringer.com/nba/2020/2/25/21151896/zion-williamson-shaquille-oneal-pelicans-lakers)
+- [Sports Illustrated: Julius Randle compares Anthony Edwards to Kobe Bryant](https://www.si.com/nba/julius-randle-praise-anthony-edwards-confidence-kobe-bryant-comparison-timberwolves)
+- [Sports Illustrated: Why Anthony Edwards reminds Charles Barkley of Jordan and Kobe](https://www.si.com/nba/2024/04/27/anthony-edwards-reminds-charles-barkley-michael-jordan-kobe-bryant)
+- [EssentiallySports: Draymond Green could pass the torch to Kyle Anderson](https://www.essentiallysports.com/nba-active-basketball-news-uncertain-on-warriors-future-draymond-green-could-pass-the-torch-to-thirty-yo-star-kyle-anderson)
 

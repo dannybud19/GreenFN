@@ -35,7 +35,7 @@ Persistence next-season RMSE: 0.610.
 - PASS: Position probe well above chance (> 0.40)
 - PASS: Stability check passes (all seeds)
 - PASS: Control reproduces Phase 3 (mean non-adjacent hit@10 within 0.005 of 0.746)
-- REPORTED: sanity comps marked and scored. Chosen 8 pass, 7 partial, 0 fail, mean 1.87; control 8 / 6 / 1, mean 1.80; B2 6 / 8 / 1, mean 1.70 (see Sanity summary)
+- REPORTED: sanity comps marked and scored. Chosen 8 pass, 7 partial, 0 fail, mean 1.90 (1.87 before Danny's 18 Nov override of one mark); control 8 / 6 / 1, mean 1.80; B2 6 / 8 / 1, mean 1.70 (see Sanity summary)
 
 If a line fails, it is recorded as a finding; the metric is not changed.
 
@@ -141,7 +141,7 @@ Judgement column is filled by `src/score_sanity.py --report reports/phase4_era.m
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Season-centred encoder alpha=0.5 s2026 | Larry Smith 1982, Jeff Foster 2006, Reggie Evans 2005, Tyson Chandler 2008, Andris Biedriņš 2008 | **pass** (2.5/5): Larry Smith ~, Jeff Foster ~, Reggie Evans ✓, Tyson Chandler ~ |
+| Season-centred encoder alpha=0.5 s2026 | Larry Smith 1982, Jeff Foster 2006, Reggie Evans 2005, Tyson Chandler 2008, Andris Biedriņš 2008 | **pass** (3/5): Larry Smith ~, Jeff Foster ~, Reggie Evans ✓, Tyson Chandler ✓ |
 | Era encoder lambda=0.0 s2026 | Larry Smith 1982, Jeff Foster 2005, Reggie Evans 2011, Michael Cage 1990, Jamie Feick 1999 | **pass** (3/5): Larry Smith ~, Jeff Foster ~, Reggie Evans ✓, Michael Cage ~, Jamie Feick ~ |
 | B2 cosine | Jeff Foster 2004, Charles Oakley 1990, Larry Micheaux 1985, Trevor Booker 2015, Nazr Mohammed 2008 | **partial** (1/5): Jeff Foster ~, Charles Oakley ~ |
 
@@ -209,7 +209,7 @@ Human judgements from `config/sanity_marks.json` (fair = 1, partial = 0.5, wrong
 
 | Model | Pass | Partial | Fail | Mean score (out of 5) |
 |---|---|---|---|---|
-| Season-centred encoder alpha=0.5 s2026 | 8 | 7 | 0 | 1.87 |
+| Season-centred encoder alpha=0.5 s2026 | 8 | 7 | 0 | 1.90 |
 | Era encoder lambda=0.0 s2026 | 8 | 6 | 1 | 1.80 |
 | B2 cosine | 6 | 8 | 1 | 1.70 |
 
@@ -218,6 +218,6 @@ Human judgements from `config/sanity_marks.json` (fair = 1, partial = 0.5, wrong
 - **Season centring is chosen; the adversary failed.** Centring at alpha 0.5 brings the linear era probe from 0.323 to 0.227 (B2 0.190, chance 0.20) for almost no retrieval cost (non-adjacent hit@10 0.745 against the control's 0.746). No adversary setting reached the 0.25 target: its best was 0.292 at lambda 1.0, which already cost retrieval (0.728), and lambda 3.0 read 0.317. The encoder fools the head it trains against, but a fresh probe still finds the era, as the exploratory runs in the plan predicted.
 - **The era is hidden from a linear reader, not removed.** A nonlinear probe on validation players still reads 0.319 for the chosen model (control 0.324). B2's raw z-scores read 0.430 on the same probe, so era information is present nonlinearly even in the hand-built features; within-season z-scores only hid it from a straight-line reader. Comps use cosine similarity, which is linear, so the linear probe is the relevant one for comps.
 - **Comps don't cross eras more.** The cross-era share of top-10 comps barely moves (0.723 against 0.725), and in the era translation test Curry and Bird draw from 3 decades against 4 under the control (Magic stays at 5). Removing the shared season average doesn't by itself pull in players from other decades.
-- **Sanity comps: first model with no fails.** 8 pass, 7 partial, 0 fail (mean 1.87) against the control's 8 / 6 / 1 (1.80) and B2's 6 / 8 / 1 (1.70). Nash moves from fail to partial (Mark Price returns, plus Calderon), and Barkley gains Shawn Kemp. Kobe loses Michael Jordan, which is why the Jordan and Kobe known pair drops from pass to partial. Five names (Haliburton, Tyson Chandler, Stanley Roberts, Bernard King, Karl Malone) were marked by Claude from researched consensus at Danny's request.
+- **Sanity comps: first model with no fails.** 8 pass, 7 partial, 0 fail (mean 1.90; 1.87 before Danny marked Tyson Chandler a fair comp for Rodman, overriding Claude's partial) against the control's 8 / 6 / 1 (1.80) and B2's 6 / 8 / 1 (1.70). Nash moves from fail to partial (Mark Price returns, plus Calderon), and Barkley gains Shawn Kemp. Kobe loses Michael Jordan, which is why the Jordan and Kobe known pair drops from pass to partial. Five names (Haliburton, Tyson Chandler, Stanley Roberts, Bernard King, Karl Malone) were marked by Claude from researched consensus at Danny's request.
 - **Everything else holds.** The control reproduces Phase 3 exactly (all three seeds to six decimals), position stays at 0.657, the stability check passes, and next-season error is unchanged (about 0.62, still worse than persistence's 0.610).
 - **For Phase 5.** Era removal is met on the plan's linear measure but not in the comps themselves. Career profiles (centre, peak, spread) are the next lever; whether to also try a nonlinear era target is an open question for the Phase 5 plan.

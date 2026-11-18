@@ -83,4 +83,6 @@ Candidates are all non-hold-out players with 2+ qualified seasons, from every sp
 
 | Date | Change | Reason |
 |---|---|---|
-| | | |
+| 18 Nov 2026 | The 27 new sanity comp names were marked by Claude from researched consensus, not by Danny | Danny delegated them, as in Phases 3 and 4; recorded in notes/sanity_judgements.md |
+| 18 Nov 2026 | Danny reviewed the delegated marks on the comp-check page and overrode one: Tyson Chandler for Rodman is fair, not partial. Phase 4's chosen model and Phase 5's best-season column move from mean 1.87 to 1.90; no verdict changes; the Phase 4 report was re-scored on this branch | Danny's own opinion is final; sections 6 and 7 above keep their original 1.87 as written before the search |
+| 18 Nov 2026 | Report wording: the year after each comp is his first qualified season (the text wrongly said career span) | Fixed in evaluate_career.py and the report; numbers unchanged |

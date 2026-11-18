@@ -38,7 +38,7 @@ Split-half: each validation player with 4+ qualified seasons is split into two p
 - PASS: Chosen method beats the best-season reference on split-half hit@10
 - PASS: Lambda effect is explainable: mean spread gap of comps falls as lambda rises
 - PASS: Career shape: Stockton's spread is below the median (low spread)
-- PENDING: sanity comps marked and scored, no sanity player failing (see `reports/phase5_unmarked_comps.json`)
+- PASS: sanity comps marked and scored, no sanity player failing. Chosen 11 pass, 4 partial, 0 fail, mean 2.17; best season match 8 / 7 / 0, mean 1.90 (see Sanity summary)
 
 If a line fails, it is recorded as a finding; the metric is not changed.
 
@@ -82,112 +82,130 @@ If a line fails, it is recorded as a finding; the metric is not changed.
 
 ## Sanity comps (top 5 comp players, whole careers; seed 2026)
 
-Judgement column is filled by `src/score_sanity.py --report reports/phase5_career.md` once every name is marked in `config/sanity_marks.json`. Seasons in brackets are each comp's career span.
+Judgement column is filled by `src/score_sanity.py --report reports/phase5_career.md` once every name is marked in `config/sanity_marks.json`. The year after each name is that comp's first qualified season.
 
 ### Kareem Abdul-Jabbar
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | Kevin McHale 1981, Elton Brand 2000, Larry Nance 1982, Pau Gasol 2002, Patrick Ewing 1986 | |
-| Best season match | Obi Toppin 2021, Kevin McHale 1981, Chris Bosh 2004, Rasheed Wallace 1996, Elton Brand 2000 | |
+| Career a=0.25 b=0.75 lambda=0.0 | Kevin McHale 1981, Elton Brand 2000, Larry Nance 1982, Pau Gasol 2002, Patrick Ewing 1986 | **pass** (2/5): Kevin McHale ~, Elton Brand ~, Pau Gasol ~, Patrick Ewing ~ |
+| Best season match | Obi Toppin 2021, Kevin McHale 1981, Chris Bosh 2004, Rasheed Wallace 1996, Elton Brand 2000 | **partial** (1.5/5): Kevin McHale ~, Chris Bosh ~, Elton Brand ~ |
 
 ### Magic Johnson
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | Tyrese Haliburton 2021, Kevin Johnson 1988, John Stockton 1985, Deron Williams 2006, Steve Nash 1997 | |
-| Best season match | Kevin Johnson 1988, Andre Miller 2000, Deron Williams 2006, Tyrese Haliburton 2021, Reggie Theus 1980 | |
+| Career a=0.25 b=0.75 lambda=0.0 | Tyrese Haliburton 2021, Kevin Johnson 1988, John Stockton 1985, Deron Williams 2006, Steve Nash 1997 | **pass** (2/5): Tyrese Haliburton ~, John Stockton ~, Deron Williams ~, Steve Nash ~ |
+| Best season match | Kevin Johnson 1988, Andre Miller 2000, Deron Williams 2006, Tyrese Haliburton 2021, Reggie Theus 1980 | **partial** (1.5/5): Andre Miller ~, Deron Williams ~, Tyrese Haliburton ~ |
 
 ### Larry Bird
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | Stephen Curry 2010, Ray Allen 1997, Kevin Durant 2008, Kyrie Irving 2012, Kemba Walker 2012 | |
-| Best season match | Stephen Curry 2010, Ray Allen 1997, Tyler Herro 2020, Clyde Drexler 1984, Antoine Walker 1997 | |
+| Career a=0.25 b=0.75 lambda=0.0 | Stephen Curry 2010, Ray Allen 1997, Kevin Durant 2008, Kyrie Irving 2012, Kemba Walker 2012 | **partial** (1.5/5): Stephen Curry ~, Ray Allen ~, Kevin Durant ~ |
+| Best season match | Stephen Curry 2010, Ray Allen 1997, Tyler Herro 2020, Clyde Drexler 1984, Antoine Walker 1997 | **partial** (1.5/5): Stephen Curry ~, Ray Allen ~, Antoine Walker ~ |
 
 ### Isiah Thomas
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | Tim Hardaway 1990, Kenny Anderson 1992, Baron Davis 2000, Ray Williams 1980, Stephon Marbury 1997 | |
-| Best season match | Kelvin Ransey 1981, Larry Drew 1981, Robert Pack 1992, Monta Ellis 2006, Kenny Anderson 1992 | |
+| Career a=0.25 b=0.75 lambda=0.0 | Tim Hardaway 1990, Kenny Anderson 1992, Baron Davis 2000, Ray Williams 1980, Stephon Marbury 1997 | **pass** (2.5/5): Tim Hardaway ✓, Kenny Anderson ~, Baron Davis ~, Stephon Marbury ~ |
+| Best season match | Kelvin Ransey 1981, Larry Drew 1981, Robert Pack 1992, Monta Ellis 2006, Kenny Anderson 1992 | **partial** (0.5/5): Kenny Anderson ~ |
 
 ### Charles Barkley
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | Karl Malone 1986, Nikola Jokić 2016, Jeff Ruland 1982, Shawn Kemp 1990, Kevin Garnett 1996 | |
-| Best season match | Kevin Garnett 1996, Karl Malone 1986, Paul Millsap 2007, Shawn Kemp 1990, Domantas Sabonis 2017 | |
+| Career a=0.25 b=0.75 lambda=0.0 | Karl Malone 1986, Nikola Jokić 2016, Jeff Ruland 1982, Shawn Kemp 1990, Kevin Garnett 1996 | **pass** (2/5): Karl Malone ~, Jeff Ruland ~, Shawn Kemp ✓ |
+| Best season match | Kevin Garnett 1996, Karl Malone 1986, Paul Millsap 2007, Shawn Kemp 1990, Domantas Sabonis 2017 | **pass** (2.5/5): Karl Malone ~, Paul Millsap ~, Shawn Kemp ✓, Domantas Sabonis ~ |
 
 ### Michael Jordan
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | Kobe Bryant 1997, Dwyane Wade 2004, Shai Gilgeous-Alexander 2019, Donovan Mitchell 2018, Kawhi Leonard 2012 | |
-| Best season match | LeBron James 2004, Kobe Bryant 1997, Tracy McGrady 1998, Dominique Wilkins 1983, Grant Hill 1995 | |
+| Career a=0.25 b=0.75 lambda=0.0 | Kobe Bryant 1997, Dwyane Wade 2004, Shai Gilgeous-Alexander 2019, Donovan Mitchell 2018, Kawhi Leonard 2012 | **pass** (3/5): Kobe Bryant ✓, Dwyane Wade ~, Shai Gilgeous-Alexander ~, Donovan Mitchell ~, Kawhi Leonard ~ |
+| Best season match | LeBron James 2004, Kobe Bryant 1997, Tracy McGrady 1998, Dominique Wilkins 1983, Grant Hill 1995 | **pass** (3/5): LeBron James ~, Kobe Bryant ✓, Tracy McGrady ~, Dominique Wilkins ~, Grant Hill ~ |
 
 ### John Stockton
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | Chris Paul 2006, Kevin Porter 1980, Micheal Williams 1991, Maurice Cheeks 1980, Kevin Johnson 1988 | |
-| Best season match | Chris Paul 2006, Maurice Cheeks 1980, Doc Rivers 1984, Andre Miller 2000, José Calderón 2006 | |
+| Career a=0.25 b=0.75 lambda=0.0 | Chris Paul 2006, Kevin Porter 1980, Micheal Williams 1991, Maurice Cheeks 1980, Kevin Johnson 1988 | **pass** (2/5): Chris Paul ✓, Kevin Porter ~, Maurice Cheeks ~ |
+| Best season match | Chris Paul 2006, Maurice Cheeks 1980, Doc Rivers 1984, Andre Miller 2000, José Calderón 2006 | **pass** (2.5/5): Chris Paul ✓, Maurice Cheeks ~, Andre Miller ~, José Calderón ~ |
 
 ### Dennis Rodman
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | Jeff Foster 2001, Larry Smith 1981, Michael Smith 1995, Andris Biedriņš 2006, Joey Dorsey 2011 | |
-| Best season match | Larry Smith 1981, Jeff Foster 2001, Reggie Evans 2003, Tyson Chandler 2002, Andris Biedriņš 2006 | |
+| Career a=0.25 b=0.75 lambda=0.0 | Jeff Foster 2001, Larry Smith 1981, Michael Smith 1995, Andris Biedriņš 2006, Joey Dorsey 2011 | **pass** (2/5): Jeff Foster ~, Larry Smith ~, Michael Smith ~, Joey Dorsey ~ |
+| Best season match | Larry Smith 1981, Jeff Foster 2001, Reggie Evans 2003, Tyson Chandler 2002, Andris Biedriņš 2006 | **pass** (3/5): Larry Smith ~, Jeff Foster ~, Reggie Evans ✓, Tyson Chandler ✓ |
 
 ### Shaquille O'Neal
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | Tim Duncan 1998, Dwight Howard 2005, Alonzo Mourning 1993, Amar'e Stoudemire 2003, Zion Williamson 2020 | |
-| Best season match | Dwight Howard 2005, Tim Duncan 1998, Alonzo Mourning 1993, Steve Johnson 1982, Stanley Roberts 1992 | |
+| Career a=0.25 b=0.75 lambda=0.0 | Tim Duncan 1998, Dwight Howard 2005, Alonzo Mourning 1993, Amar'e Stoudemire 2003, Zion Williamson 2020 | **pass** (3.5/5): Tim Duncan ~, Dwight Howard ✓, Alonzo Mourning ~, Amar'e Stoudemire ~, Zion Williamson ✓ |
+| Best season match | Dwight Howard 2005, Tim Duncan 1998, Alonzo Mourning 1993, Steve Johnson 1982, Stanley Roberts 1992 | **pass** (2.5/5): Dwight Howard ✓, Tim Duncan ~, Alonzo Mourning ~, Stanley Roberts ~ |
 
 ### Steve Nash
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | José Calderón 2006, Mark Price 1987, Kenny Smith 1988, Tyrese Haliburton 2021, Scott Skiles 1988 | |
-| Best season match | Jordan Farmar 2007, Kirk Hinrich 2004, Mark Price 1987, Steve Blake 2004, José Calderón 2006 | |
+| Career a=0.25 b=0.75 lambda=0.0 | José Calderón 2006, Mark Price 1987, Kenny Smith 1988, Tyrese Haliburton 2021, Scott Skiles 1988 | **pass** (3/5): José Calderón ~, Mark Price ✓, Tyrese Haliburton ✓, Scott Skiles ~ |
+| Best season match | Jordan Farmar 2007, Kirk Hinrich 2004, Mark Price 1987, Steve Blake 2004, José Calderón 2006 | **partial** (1.5/5): Mark Price ✓, José Calderón ~ |
 
 ### Kobe Bryant
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | Donovan Mitchell 2018, Michael Jordan 1985, Anthony Edwards 2021, Paul Pierce 1999, Bradley Beal 2013 | |
-| Best season match | Kawhi Leonard 2012, Bradley Beal 2013, Donovan Mitchell 2018, Bernard King 1981, Paul Pierce 1999 | |
+| Career a=0.25 b=0.75 lambda=0.0 | Donovan Mitchell 2018, Michael Jordan 1985, Anthony Edwards 2021, Paul Pierce 1999, Bradley Beal 2013 | **pass** (3.5/5): Donovan Mitchell ~, Michael Jordan ✓, Anthony Edwards ✓, Paul Pierce ~, Bradley Beal ~ |
+| Best season match | Kawhi Leonard 2012, Bradley Beal 2013, Donovan Mitchell 2018, Bernard King 1981, Paul Pierce 1999 | **pass** (2.5/5): Kawhi Leonard ~, Bradley Beal ~, Donovan Mitchell ~, Bernard King ~, Paul Pierce ~ |
 
 ### LeBron James
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | Dwyane Wade 2004, Luka Dončić 2019, Grant Hill 1995, Michael Jordan 1985, Shai Gilgeous-Alexander 2019 | |
-| Best season match | Luka Dončić 2019, Dwyane Wade 2004, Grant Hill 1995, Michael Jordan 1985, Ja Morant 2020 | |
+| Career a=0.25 b=0.75 lambda=0.0 | Dwyane Wade 2004, Luka Dončić 2019, Grant Hill 1995, Michael Jordan 1985, Shai Gilgeous-Alexander 2019 | **pass** (2/5): Dwyane Wade ~, Luka Dončić ~, Grant Hill ~, Michael Jordan ~ |
+| Best season match | Luka Dončić 2019, Dwyane Wade 2004, Grant Hill 1995, Michael Jordan 1985, Ja Morant 2020 | **pass** (2/5): Luka Dončić ~, Dwyane Wade ~, Grant Hill ~, Michael Jordan ~ |
 
 ### Stephen Curry
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | Mark Price 1987, Manu Ginóbili 2003, Reggie Theus 1980, Sam Cassell 1994, Kyrie Irving 2012 | |
-| Best season match | Mo Williams 2004, Ray Allen 1997, Mike James 2003, Jordan Farmar 2007, Jeff Hornacek 1987 | |
+| Career a=0.25 b=0.75 lambda=0.0 | Mark Price 1987, Manu Ginóbili 2003, Reggie Theus 1980, Sam Cassell 1994, Kyrie Irving 2012 | **partial** (1.5/5): Mark Price ✓, Kyrie Irving ~ |
+| Best season match | Mo Williams 2004, Ray Allen 1997, Mike James 2003, Jordan Farmar 2007, Jeff Hornacek 1987 | **partial** (1/5): Ray Allen ~, Jeff Hornacek ~ |
 
 ### Draymond Green
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | Carlos Terry 1981, Robert Horry 1993, Vlade Divac 1990, Kyle Anderson 2016, Juan Toscano-Anderson 2021 | |
-| Best season match | Rich Kelley 1980, Nate McMillan 1987, Earl Watson 2002, Cody Martin 2020, Scottie Pippen 1988 | |
+| Career a=0.25 b=0.75 lambda=0.0 | Carlos Terry 1981, Robert Horry 1993, Vlade Divac 1990, Kyle Anderson 2016, Juan Toscano-Anderson 2021 | **partial** (1/5): Robert Horry ~, Kyle Anderson ~ |
+| Best season match | Rich Kelley 1980, Nate McMillan 1987, Earl Watson 2002, Cody Martin 2020, Scottie Pippen 1988 | **partial** (1/5): Scottie Pippen ✓ |
 
 ### Nikola Jokić
 
 | Model | Top 5 | Judgement |
 |---|---|---|
-| Career a=0.25 b=0.75 lambda=0.0 | Kevin Garnett 1996, Charles Barkley 1985, Karl Malone 1986, DeMarcus Cousins 2011, Joel Embiid 2017 | |
-| Best season match | Kevin Garnett 1996, Arvydas Sabonis 1996, Greg Monroe 2011, Domantas Sabonis 2017, Karl Malone 1986 | |
+| Career a=0.25 b=0.75 lambda=0.0 | Kevin Garnett 1996, Charles Barkley 1985, Karl Malone 1986, DeMarcus Cousins 2011, Joel Embiid 2017 | **partial** (1/5): DeMarcus Cousins ~, Joel Embiid ~ |
+| Best season match | Kevin Garnett 1996, Arvydas Sabonis 1996, Greg Monroe 2011, Domantas Sabonis 2017, Karl Malone 1986 | **pass** (2/5): Arvydas Sabonis ✓, Greg Monroe ~, Domantas Sabonis ~ |
 
 27 comp names still need a mark: `reports/phase5_unmarked_comps.json`.
 
+## Sanity summary
+
+Human judgements from `config/sanity_marks.json` (fair = 1, partial = 0.5, wrong = 0, summed over the top 5). Pass if the score is 2 or more, partial if above 0, fail if 0. Judged without looking at the stats; see `notes/sanity_judgements.md`.
+
+| Model | Pass | Partial | Fail | Mean score (out of 5) |
+|---|---|---|---|---|
+| Career a=0.25 b=0.75 lambda=0.0 | 11 | 4 | 0 | 2.17 |
+| Best season match | 8 | 7 | 0 | 1.90 |
+
+## Findings
+
+- **Whole careers beat single seasons.** Split-half hit@10 is 0.981 for the chosen career score against 0.916 for best-season matching, and MRR 0.900 against 0.695. A player's two half-careers find each other far more reliably when compared as profiles than by their single closest seasons.
+- **Best sanity record of the project.** 11 pass, 4 partial, 0 fail (mean 2.17), against best-season matching's 8 / 7 / 0 (1.90) on the same models and Phase 2's best baseline at 6 / 8 / 1 (1.70). Biggest gains: Isiah (Tim Hardaway, Kenny Anderson, Baron Davis), Nash (Mark Price and Tyrese Haliburton), Kobe (Michael Jordan and Anthony Edwards), Shaq (Dwight Howard and Zion Williamson) and Magic. Jokic falls from pass to partial. 27 new names were marked by Claude from researched consensus at Danny's request; the three fair marks among them (Haliburton for Nash, Zion for Shaq, Edwards for Kobe) are widely published comparisons.
+- **Known pairs:** Jordan and Kobe now pass at player level (partial under best-season matching); Shaq and Howard pass; Nash and Paul still fail, the one known pair no method has found.
+- **The weights barely matter.** Every career-score setting at lambda 0 lands between about 0.974 and 0.981 split-half hit@10. The chosen setting leans on the peak (centre 0.25, peak 0.75), but centre-only has the higher MRR (0.909 against 0.900), so "usual" and "best" describe players almost equally well. Wasserstein, which uses every season, is no better (0.975).
+- **Lambda is a preference, not accuracy.** As lambda goes 0, 0.25, 0.5, 1.0, the spread gap of comps falls 0.0284, 0.0144, 0.0098, 0.0063 and the overlap with the lambda 0 comps falls to 35%, so the slider does what it says (Stockton's comps shift towards steadier careers). But split-half hit@10 falls from 0.981 to 0.629, because two halves of one career never have identical spread. It belongs in the app as a slider, with lambda 0 as the default.
+- **Career shape matches intuition.** Stockton has the lowest spread of any pool player with 4+ seasons (0th percentile); LeBron sits at 13%, Rodman 29%, Curry 30% and Kareem 48%.
+- **Cross-era: a small step.** Career comps come from another decade slightly more often than season comps (0.748 against 0.720).

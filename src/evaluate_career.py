@@ -229,7 +229,7 @@ def write_report(agg, best, ref, centre_only, chosen, reference, comps, pairs, s
     lines += [f"| {m} | {p} | {r} |" for m, p, r in pairs]
     lines += ["", "## Sanity comps (top 5 comp players, whole careers; seed 2026)", "",
               "Judgement column is filled by `src/score_sanity.py --report reports/phase5_career.md` once every name "
-              "is marked in `config/sanity_marks.json`. Seasons in brackets are each comp's career span.", ""]
+              "is marked in `config/sanity_marks.json`. The year after each name is that comp's first qualified season.", ""]
     for pid, pname in SANITY.items():
         lines += [f"### {pname}", "", "| Model | Top 5 | Judgement |", "|---|---|---|"]
         for label, key in [(chosen.name, "chosen"), (reference.name, "reference")]:
