@@ -1,5 +1,5 @@
 {
-  "_about": "Human judgements of the Phase 2 baseline comps (B1 to B4 top 5). fair = 1 point, partial = 0.5, wrong = 0. Judged by Danny on 17 Nov 2026: his own opinion first, then researched external consensus (articles, forums) for the rest, each reviewed and confirmed by him. Stats were not used to judge. See notes/sanity_judgements.md. Phase 3 encoder comps (27 names, 17 Nov 2026) were marked by Claude from researched consensus at Danny's request (he delegated these), using the same rules: never the stats.",
+  "_about": "Human judgements of the Phase 2 baseline comps (B1 to B4 top 5). fair = 1 point, partial = 0.5, wrong = 0. Judged by Danny on 17 Nov 2026: his own opinion first, then researched external consensus (articles, forums) for the rest, each reviewed and confirmed by him. Stats were not used to judge. See notes/sanity_judgements.md. Phase 3 encoder comps (27 names, 17 Nov 2026) were marked by Claude from researched consensus at Danny's request (he delegated these), using the same rules: never the stats. Phase 4 comps (5 names, 18 Nov 2026) were also marked by Claude, delegated by Danny.",
   "aliases": {
     "Anfernee Hardaway": "Penny Hardaway"
   },
@@ -40,7 +40,8 @@
         "Andre Miller",
         "Deron Williams",
         "James Harden",
-        "John Stockton"
+        "John Stockton",
+        "Tyrese Haliburton"
       ],
       "wrong": [
         "Kevin Johnson",
@@ -181,7 +182,8 @@
         "Jamie Feick",
         "Jeff Foster",
         "Larry Smith",
-        "Michael Cage"
+        "Michael Cage",
+        "Tyson Chandler"
       ],
       "wrong": [
         "Andris Biedriņš",
@@ -204,6 +206,7 @@
       "partial": [
         "Alonzo Mourning",
         "Eddy Curry",
+        "Stanley Roberts",
         "Tim Duncan"
       ],
       "wrong": [
@@ -243,6 +246,7 @@
         "Michael Jordan"
       ],
       "partial": [
+        "Bernard King",
         "Bradley Beal",
         "Donovan Mitchell",
         "Gilbert Arenas",
@@ -347,6 +351,7 @@
         "Christian Laettner",
         "Frank Brickowski",
         "Gorgui Dieng",
+        "Karl Malone",
         "Kelly Olynyk",
         "Kevin Garnett",
         "Paul Millsap"
