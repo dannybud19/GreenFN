@@ -1,18 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { computeGrid, minorAlpha, niceStep } from "./grid";
+import { computeGrid, LABEL, layoutLabels, majorStep, minorAlpha, niceStep } from "./grid";
 
-const box = { minX: 50, maxX: 850, minY: 40, maxY: 540 }; // 800 x 500 px at 1x
+// Roughly the app's 1x map: 723 x 338 px of dots inside an 840 x 593 plot.
+const box = { minX: 50, maxX: 773, minY: 128, maxY: 466 };
+const W = 840;
+const H = 593;
 
 describe("map grid", () => {
-  it("picks 1, 2 or 5 times a power of ten, at least 90 px apart", () => {
-    expect(niceStep(8)).toBe(20); // 90 / 8 = 11.25 -> 20
-    expect(niceStep(5)).toBe(20); // 18 -> 20
-    expect(niceStep(20)).toBe(5); // 4.5 -> 5
-    expect(niceStep(40)).toBe(5); // 2.25 -> 5
-    expect(niceStep(64)).toBe(2); // 1.41 -> 2
+  it("niceStep picks 1, 2 or 5 times a power of ten, at least the given spacing", () => {
+    expect(niceStep(8)).toBe(20);
+    expect(niceStep(20)).toBe(5);
+    expect(niceStep(64)).toBe(2);
     expect(niceStep(90)).toBe(1);
     expect(niceStep(400)).toBe(0.5);
-    expect(niceStep(1000)).toBe(0.1);
+  });
+
+  it("the major step is the nice step closest to 90 px on screen", () => {
+    expect(majorStep(7.23, 3.38)).toBe(10); // 1x: 72 px across beats 145 px
+    expect(majorStep(57.8, 27)).toBe(2); // 8x: 116 px beats 58 px
+    expect(majorStep(90, 50)).toBe(1);
+    expect(majorStep(300, 100)).toBe(0.2); // 60 px vs 150 px
   });
 
   it("minor lines fade in between 6 and 24 px", () => {
@@ -21,28 +28,48 @@ describe("map grid", () => {
     expect(minorAlpha(30)).toBe(1);
   });
 
-  it("at 1x spans 0 to 100 with the origin at the top-left", () => {
-    const g = computeGrid({ k: 1, x: 0, y: 0 }, box, 900, 600);
-    expect(g.major).toBe(20); // 5 px per unit down -> 18 -> 20
-    const majorsX = g.xs.filter((l) => l.major).map((l) => l.v);
-    expect(majorsX).toEqual([0, 20, 40, 60, 80, 100]);
-    expect(g.xs[0].px).toBe(50);
-    expect(g.ys[0].px).toBe(40); // 0 at the top
-    expect(g.ys[g.ys.length - 1].px).toBe(540); // 100 at the bottom
-    expect(g.decimals).toBe(0);
+  it("at 1x labels 0, 10, 20 ... 100 on both axes, origin at the top-left", () => {
+    const g = computeGrid({ k: 1, x: 0, y: 0 }, box, W, H);
+    expect(g.major).toBe(10);
+    const tens = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    expect(g.xs.filter((l) => l.major).map((l) => l.v)).toEqual(tens);
+    expect(g.ys.filter((l) => l.major).map((l) => l.v)).toEqual(tens);
+    expect(g.ys[0].px).toBe(128); // 0 at the top
+    const lab = layoutLabels(g, W, H);
+    expect(lab.across.map((l) => l.v)).toEqual(tens);
+    expect(lab.down.map((l) => l.v)).toEqual(tens);
   });
 
-  it("gets finer when zoomed in and only lists lines in view", () => {
-    const t = { k: 8, x: -2000, y: -1500 };
-    const g = computeGrid(t, box, 900, 600);
-    // 8x: 64 px per unit across, 40 down -> 90 / 40 = 2.25 -> 5; minors every 1 unit (40 px) fully visible.
-    expect(g.major).toBe(5);
-    expect(g.minor).toBe(1);
-    expect(g.minorAlpha).toBe(1);
-    for (const l of g.xs) expect(l.px >= -0.5 && l.px <= 900.5).toBe(true);
-    for (const l of g.ys) expect(l.px >= -0.5 && l.px <= 600.5).toBe(true);
-    expect(g.xs.some((l) => l.major)).toBe(true);
-    // Very deep zoom would need decimals.
-    expect(computeGrid({ k: 8, x: 0, y: 0 }, { minX: 0, maxX: 2500, minY: 0, maxY: 2500 }, 900, 600).decimals).toBe(1); // 200 px per unit -> step 0.5
+  it("numbers sit at the grid edge, centred on their lines, with a 4 px tick", () => {
+    const g = computeGrid({ k: 1, x: 0, y: 0 }, box, W, H);
+    const lab = layoutLabels(g, W, H);
+    for (const l of lab.across) {
+      expect(l.y).toBe(128 - LABEL.gapTop);
+      expect(l.tick).toEqual([l.x, 128 - 4, l.x, 128]);
+      expect(g.xs.some((line) => line.major && line.v === l.v && line.px === l.x)).toBe(true);
+    }
+    for (const l of lab.down) {
+      expect(l.x).toBe(50 - LABEL.gapLeft);
+      expect(l.tick).toEqual([50 - 4, l.y, 50, l.y]);
+    }
+  });
+
+  it("when the grid edge is off screen the numbers stick to the visible edge", () => {
+    const t = { k: 4, x: -1200, y: -900 };
+    const g = computeGrid(t, box, W, H);
+    expect(g.span.y0).toBeLessThan(0);
+    const lab = layoutLabels(g, W, H);
+    expect(lab.top).toBe(LABEL.gapTop + LABEL.h);
+    expect(lab.across.every((l) => l.y === lab.top - LABEL.gapTop)).toBe(true);
+    expect(lab.left).toBeGreaterThanOrEqual(LABEL.gapLeft);
+    expect(lab.across.every((l) => l.x >= lab.left - 0.5 && l.x <= W)).toBe(true);
+  });
+
+  it("skips every other number rather than let two overlap", () => {
+    // Squash the across axis so 10-unit lines are only 20 px apart.
+    const g = computeGrid({ k: 1, x: 0, y: 0 }, { minX: 0, maxX: 200, minY: 0, maxY: 900 }, 300, 1000);
+    const lab = layoutLabels(g, 300, 1000);
+    const xs = lab.across.map((l) => l.x);
+    for (let i = 1; i < xs.length; i++) expect(xs[i] - xs[i - 1]).toBeGreaterThanOrEqual(3 * LABEL.charW + 6);
   });
 });

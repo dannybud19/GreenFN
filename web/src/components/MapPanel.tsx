@@ -24,7 +24,7 @@ import {
   type Points,
   type Transform,
 } from "@/lib/map";
-import { computeGrid } from "@/lib/grid";
+import { computeGrid, layoutLabels } from "@/lib/grid";
 import { fitTransform } from "@/lib/playback";
 import type { Theme } from "@/lib/theme";
 
@@ -513,7 +513,7 @@ export function MapPanel(props: Props) {
   // The grid: 0 to 100 across the dots' bounding box, origin top-left, adaptive major and minor lines. Lines and
   // labels come from the same transform, so they move and scale together with the dots.
   const grid = base && size.w > 0 ? computeGrid(t, base.box, size.w, size.h) : null;
-  const label = (v: number) => v.toFixed(grid?.decimals ?? 0);
+  const labels = grid ? layoutLabels(grid, size.w, size.h) : null;
   // The team code's cell: 0 to 10 by 0 to 10 at 1x (base coordinates), scaled with the map.
   const teamCell = base
     ? { x: base.box.minX, y: base.box.minY, w: (base.box.maxX - base.box.minX) / 10, h: (base.box.maxY - base.box.minY) / 10 }
@@ -548,34 +548,14 @@ export function MapPanel(props: Props) {
         </div>
       </div>
 
-      <div className="relative mt-11 mb-5 h-[300px] pl-5 md:h-auto md:min-h-[260px] md:flex-1 xl:mr-[19px] xl:ml-[1px]">
-        {/* Grid numbers on the top and left edges, at the major lines in view. */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 left-5">
-          {grid?.xs
-            .filter((l) => l.major && l.px >= 0 && l.px <= size.w)
-            .map((l) => (
-              <span key={`x${l.v}`} data-gx-label={l.v} className="absolute -top-[17px] -translate-x-1/2 text-[10px] text-muted tabular-nums" style={{ left: l.px }}>
-                {label(l.v)}
-              </span>
-            ))}
-        </div>
-        <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-5">
-          {grid?.ys
-            .filter((l) => l.major && l.px >= 0 && l.px <= size.h)
-            .map((l) => (
-              <span key={`y${l.v}`} data-gy-label={l.v} className="absolute right-[4px] -translate-y-1/2 text-[10px] text-muted tabular-nums" style={{ top: l.px }}>
-                {label(l.v)}
-              </span>
-            ))}
-        </div>
-
+      <div className="relative mt-5 mb-5 h-[300px] md:h-auto md:min-h-[260px] md:flex-1">
         <div
           ref={plotRef}
           tabIndex={0}
           role="application"
           aria-roledescription="map"
           aria-label="Every NBA season since 1980 as a dot. Click a dot to select that player. Drag to move; scroll, pinch or double-click to zoom. Keyboard: arrow keys move, plus and minus zoom, 0 resets."
-          className={`absolute inset-y-0 right-0 left-5 touch-none overflow-hidden overscroll-contain outline-offset-4 select-none ${
+          className={`absolute inset-0 touch-none overflow-hidden overscroll-contain outline-offset-4 select-none ${
             dragging ? "cursor-grabbing" : hover !== null ? "cursor-pointer" : "cursor-grab"
           }`}
           onPointerDown={onPointerDown}
@@ -592,12 +572,14 @@ export function MapPanel(props: Props) {
           <svg aria-hidden="true" className="absolute inset-0 size-full">
             {grid && (
               <>
-                <g opacity={grid.minorAlpha}>
+                <g opacity={grid.minorAlphaX}>
                   {grid.xs
                     .filter((l) => !l.major)
                     .map((l) => (
                       <line key={`vx${l.v}`} x1={l.px} x2={l.px} y1={grid.span.y0} y2={grid.span.y1} stroke="var(--grid)" shapeRendering="crispEdges" />
                     ))}
+                </g>
+                <g opacity={grid.minorAlphaY}>
                   {grid.ys
                     .filter((l) => !l.major)
                     .map((l) => (
@@ -619,6 +601,29 @@ export function MapPanel(props: Props) {
           </svg>
 
           <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 block size-full" />
+
+          {/* Grid numbers, laid out from the same grid and transform as the lines (lib/grid.ts layoutLabels), so they
+              can never drift from them. Above the dots so they stay readable; ticks join each number to its line. */}
+          {labels && (
+            <svg aria-hidden="true" className="pointer-events-none absolute inset-0 size-full" data-grid-labels>
+              {labels.across.map((l) => (
+                <g key={`ax${l.v}`}>
+                  <line x1={l.tick[0]} y1={l.tick[1]} x2={l.tick[2]} y2={l.tick[3]} stroke="var(--muted)" shapeRendering="crispEdges" />
+                  <text data-gx-label={l.v} x={l.x} y={l.y} textAnchor="middle" dominantBaseline="text-after-edge" fontSize={10} fill="var(--muted)" stroke="var(--surface)" strokeWidth={3} paintOrder="stroke" strokeLinejoin="round" className="tabular-nums">
+                    {l.text}
+                  </text>
+                </g>
+              ))}
+              {labels.down.map((l) => (
+                <g key={`dy${l.v}`}>
+                  <line x1={l.tick[0]} y1={l.tick[1]} x2={l.tick[2]} y2={l.tick[3]} stroke="var(--muted)" shapeRendering="crispEdges" />
+                  <text data-gy-label={l.v} x={l.x} y={l.y} textAnchor="end" dominantBaseline="central" fontSize={10} fill="var(--muted)" stroke="var(--surface)" strokeWidth={3} paintOrder="stroke" strokeLinejoin="round" className="tabular-nums">
+                    {l.text}
+                  </text>
+                </g>
+              ))}
+            </svg>
+          )}
 
           {/* Team code centred on its glyphs in the top-left 0 to 10 cell, moving and scaling with the grid.
               Letters only, never a logo. */}
