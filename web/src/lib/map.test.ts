@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyT, clampT, IDENTITY, K_MAX, zoomAround } from "./map";
+import { applyT, clampT, giveAt, IDENTITY, K_MAX, zoomAround } from "./map";
 
 const W = 800;
 const H = 600;
@@ -23,18 +23,23 @@ describe("map pan and zoom transform", () => {
     expect(clampT({ k: 1, x: -5000, y: 5000 }, W, H)).toEqual({ k: 1, x: 0, y: 0 });
   });
 
-  it("zoomed in, the 1x frame always covers the container", () => {
+  it("zoomed in, the pan can go up to 25% of the container past the frame, and no further", () => {
     for (const [x, y] of [[1e5, 1e5], [-1e5, -1e5], [1e5, -1e5], [-1e5, 1e5]]) {
       const c = clampT({ k: 4, x, y }, W, H);
-      expect(c.x).toBeLessThanOrEqual(0);
-      expect(c.x).toBeGreaterThanOrEqual(W * (1 - 4));
-      expect(c.y).toBeLessThanOrEqual(0);
-      expect(c.y).toBeGreaterThanOrEqual(H * (1 - 4));
-      // The frame's corners (0, 0) and (W, H) stay outside or on the container's edges.
-      const [l, t] = applyT(c, 0, 0);
-      const [r, b] = applyT(c, W, H);
-      expect(l <= 0 && t <= 0 && r >= W && b >= H).toBe(true);
+      expect(c.x).toBeLessThanOrEqual(0.25 * W);
+      expect(c.x).toBeGreaterThanOrEqual(W * (1 - 4) - 0.25 * W);
+      expect(c.y).toBeLessThanOrEqual(0.25 * H);
+      expect(c.y).toBeGreaterThanOrEqual(H * (1 - 4) - 0.25 * H);
     }
+    expect(clampT({ k: 4, x: 1e5, y: 1e5 }, W, H)).toEqual({ k: 4, x: 200, y: 150 });
+    expect(clampT({ k: 4, x: -1e5, y: -1e5 }, W, H)).toEqual({ k: 4, x: -2600, y: -1950 });
+  });
+
+  it("the give eases in from 1x to 1.5x, so zooming out never jumps", () => {
+    expect(giveAt(1)).toBe(0);
+    expect(giveAt(1.25)).toBeCloseTo(0.125);
+    expect(giveAt(1.5)).toBe(0.25);
+    expect(giveAt(8)).toBe(0.25);
   });
 
   it("leaves a transform that is already in range unchanged", () => {

@@ -120,15 +120,22 @@ export function zoomAround(t: Transform, k2: number, px: number, py: number): Tr
   return { k: k2, x: px - (px - t.x) * r, y: py - (py - t.y) * r };
 }
 
+/** How far past the map's frame the pan may go when zoomed in: 25% of the container on each side. */
+export const EDGE_GIVE = 0.25;
+
+/** The give at zoom k: none at 1x, easing in to the full 25% by 1.5x so zooming out never jumps. */
+export const giveAt = (k: number) => EDGE_GIVE * Math.min(1, Math.max(0, (k - 1) / 0.5));
+
 /**
- * Keeps the scale in [K_MIN, K_MAX] and the 1x frame covering the w x h container: x in [w(1 - k), 0] and
- * y in [h(1 - k), 0]. At 1x that pins the map (x = y = 0); zoomed in, the frame's edges can reach the container's
- * edges but never come inside them.
+ * Keeps the scale in [K_MIN, K_MAX] and the pan within the 1x frame plus the give: x in [w(1 - k) - g w, g w] and
+ * y in [h(1 - k) - g h, g h] with g = giveAt(k). At 1x that pins the map (x = y = 0). Zoomed in, the frame's edges
+ * can come up to 25% of the container inside it, so a career near an edge can be centred.
  */
 export function clampT(t: Transform, w: number, h: number): Transform {
   const k = Math.min(K_MAX, Math.max(K_MIN, t.k));
-  const fix = (v: number, lo: number) => Math.min(0, Math.max(lo, v));
-  return { k, x: fix(t.x, w * (1 - k)), y: fix(t.y, h * (1 - k)) };
+  const g = giveAt(k);
+  const fix = (v: number, size: number) => Math.min(g * size, Math.max(size * (1 - k) - g * size, v));
+  return { k, x: fix(t.x, w), y: fix(t.y, h) };
 }
 
 /** Base (1x) screen positions of every point and their bounding box. */

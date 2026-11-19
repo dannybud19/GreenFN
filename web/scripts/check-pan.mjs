@@ -1,8 +1,8 @@
 // Pan clamp and grid labels (map pan/zoom fix).
 //   node scripts/check-pan.mjs [baseUrl]
 // 1. At 1x a drag must not move the map at all.
-// 2. At 4x, dragging far in all four directions keeps the 1x frame covering the container:
-//    tx in [W(1-k), 0] and ty in [H(1-k), 0], reaching exactly the edge it was dragged towards.
+// 2. At 4x, dragging far in all four directions stops exactly 25% of the container past the 1x frame:
+//    tx in [W(1-k) - W/4, W/4] and ty in [H(1-k) - H/4, H/4].
 // 3. Every number label sits on its own major grid line, after every move.
 import { chromium } from "playwright";
 
@@ -68,17 +68,19 @@ await page.getByRole("button", { name: "Zoom in" }).click();
 await page.waitForTimeout(450);
 const tz = await transform();
 check("zoomed to 4x", tz.k === 4, JSON.stringify(tz));
-const covers = (t) => t.x <= 0.01 && t.x >= W * (1 - t.k) - 0.01 && t.y <= 0.01 && t.y >= H * (1 - t.k) - 0.01;
+// Zoomed in (full give from 1.5x), the pan may go 25% of the container past the 1x frame on each side, no further.
+const G = 0.25;
+const covers = (t) => t.x <= G * W + 0.01 && t.x >= W * (1 - t.k) - G * W - 0.01 && t.y <= G * H + 0.01 && t.y >= H * (1 - t.k) - G * H - 0.01;
 for (const [name, dx, dy, edge] of [
-  ["right", 5000, 0, (t) => Math.abs(t.x) < 0.01],
-  ["left", -5000, 0, (t) => Math.abs(t.x - W * (1 - t.k)) < 0.01],
-  ["down", 0, 5000, (t) => Math.abs(t.y) < 0.01],
-  ["up", 0, -5000, (t) => Math.abs(t.y - H * (1 - t.k)) < 0.01],
+  ["right", 5000, 0, (t) => Math.abs(t.x - G * W) < 0.01],
+  ["left", -5000, 0, (t) => Math.abs(t.x - (W * (1 - t.k) - G * W)) < 0.01],
+  ["down", 0, 5000, (t) => Math.abs(t.y - G * H) < 0.01],
+  ["up", 0, -5000, (t) => Math.abs(t.y - (H * (1 - t.k) - G * H)) < 0.01],
 ]) {
   await drag(dx, dy);
   const t = await transform();
   lab = await labelsTrack();
-  check(`4x: drag far ${name}: frame still covers the container and stops at the edge`, covers(t) && edge(t), `tx ${t.x}, ty ${t.y}, range x [${(W * (1 - t.k)).toFixed(1)}, 0] y [${(H * (1 - t.k)).toFixed(1)}, 0]`);
+  check(`4x: drag far ${name}: stops exactly 25% past the frame edge`, covers(t) && edge(t), `tx ${t.x}, ty ${t.y}, range x [${(W * (1 - t.k) - G * W).toFixed(1)}, ${(G * W).toFixed(1)}] y [${(H * (1 - t.k) - G * H).toFixed(1)}, ${(G * H).toFixed(1)}]`);
   check(`4x after ${name}: labels move with the grid lines`, lab.worst < 1, `${lab.shown} labels, worst ${lab.worst.toFixed(2)} px`);
 }
 
@@ -96,7 +98,7 @@ const r2 = await plot.boundingBox();
 const tr = await transform();
 check(
   "resize keeps the zoom and re-clamps to the new size",
-  tr.k === 2 && tr.x <= 0.01 && tr.x >= r2.width * (1 - tr.k) - 0.01 && tr.y <= 0.01 && tr.y >= r2.height * (1 - tr.k) - 0.01,
+  tr.k === 2 && tr.x <= G * r2.width + 0.01 && tr.x >= r2.width * (1 - tr.k) - G * r2.width - 0.01 && tr.y <= G * r2.height + 0.01 && tr.y >= r2.height * (1 - tr.k) - G * r2.height - 0.01,
   `${JSON.stringify(tr)} in ${Math.round(r2.width)}x${Math.round(r2.height)}`,
 );
 

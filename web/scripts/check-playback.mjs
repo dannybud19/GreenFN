@@ -50,6 +50,13 @@ const state = (page) =>
   await page.waitForTimeout(400);
   s = await state(page);
   check("the map zooms to fit his career (more than 1x, at most 4x)", s.zoom > 1 && s.zoom <= 4, `zoom ${s.zoom}`);
+  // The fit transform stays within the pan bounds (25% past the frame at most).
+  const centre = await page.evaluate(() => {
+    const plot = document.querySelector("[aria-roledescription=map]").getBoundingClientRect();
+    const tf = document.querySelector("[aria-roledescription=map]").dataset;
+    return { w: plot.width, h: plot.height, k: +tf.zoom, x: +tf.tx, y: +tf.ty };
+  });
+  check("career fit transform is within the bounds", centre.x <= 0.25 * centre.w + 0.01 && centre.y <= 0.25 * centre.h + 0.01, JSON.stringify(centre));
   check("seasons advance every 900 ms", s.count === "02/14", s.count);
   check("pause label while playing", (await page.locator("[data-play-button]").innerText()).includes("Pause"));
   await page.waitForTimeout(900 * 5);
@@ -73,6 +80,18 @@ const state = (page) =>
   }
   s = await state(page);
   check("some season shows a mix of up and down badges", mixed);
+  const spread = await page.evaluate(() => {
+    const plot = document.querySelector("[aria-roledescription=map]").getBoundingClientRect();
+    const r = [...document.querySelectorAll("circle[data-season]")].map((c) => c.getBoundingClientRect());
+    const xs = r.map((q) => q.x + q.width / 2);
+    const ys = r.map((q) => q.y + q.height / 2);
+    return {
+      dx: (Math.min(...xs) + Math.max(...xs)) / 2 - (plot.x + plot.width / 2),
+      dy: (Math.min(...ys) + Math.max(...ys)) / 2 - (plot.y + plot.height / 2),
+      n: r.length,
+    };
+  });
+  check("Jordan's career is centred in the map area", spread.n === 14 && Math.abs(spread.dx) < 2 && Math.abs(spread.dy) < 2, `centre off by ${spread.dx.toFixed(1)}, ${spread.dy.toFixed(1)} px`);
   check("last season: › disabled, label Replay", s.count === "14/14" && s.nextDisabled && (await page.locator("[data-play-button]").innerText()).includes("Replay"), s.count);
   check("disabled arrows are skipped by the keyboard", await page.getByRole("button", { name: "Next season" }).evaluate((b) => b.disabled && b.tabIndex >= -1));
   await page.keyboard.press("Escape");

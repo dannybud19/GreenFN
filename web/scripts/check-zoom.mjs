@@ -115,8 +115,9 @@ const redDot = (page) =>
   await page.mouse.up();
   await page.waitForTimeout(200);
   const tf = await plot.evaluate((e) => ({ k: +e.dataset.zoom, x: +e.dataset.tx, y: +e.dataset.ty }));
-  const covers = tf.x <= 0.01 && tf.x >= rect.width * (1 - tf.k) - 0.01 && tf.y <= 0.01 && tf.y >= rect.height * (1 - tf.k) - 0.01;
-  check("panning is limited: the 1x frame still covers the map", covers, JSON.stringify(tf));
+  const g = 0.25;
+  const within = tf.x <= g * rect.width + 0.01 && tf.x >= rect.width * (1 - tf.k) - g * rect.width - 0.01 && tf.y <= g * rect.height + 0.01 && tf.y >= rect.height * (1 - tf.k) - g * rect.height - 0.01;
+  check("panning is limited: at most 25% past the 1x frame", within, JSON.stringify(tf));
 
   // A short click (under 4 px) still selects the season under it.
   await page.keyboard.press("0");
