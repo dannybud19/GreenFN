@@ -1,12 +1,18 @@
 "use client";
 
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AboutCard } from "@/components/AboutCard";
+import { BrandBlock } from "@/components/BrandBlock";
+import { CompList } from "@/components/CompList";
 import { MapPanel } from "@/components/MapPanel";
+import { PlayerCard } from "@/components/PlayerCard";
+import { StartCard, type Tab } from "@/components/StartCard";
 import { useTheme } from "@/components/useTheme";
-import { fetchMap, fetchPlayerFile, fetchPlayers, fetchTeams, type PlayerFile, type PlayerRow, type Team } from "@/lib/data";
+import { fetchMap, fetchPlayerFile, fetchPlayers, fetchProfiles, fetchTeams, type PlayerFile, type PlayerRow, type Profiles, type Team } from "@/lib/data";
 import type { Initial } from "@/lib/initial.server";
 import { buildPoints, type ColourMode, type Points } from "@/lib/map";
+import { careerScores, topK } from "@/lib/score";
 
 const rise = (i: number) => ({
   initial: { opacity: 0, y: 8 },
@@ -18,7 +24,7 @@ const idFromPath = (path: string) => /^\/player\/([a-z0-9]+)\/?$/.exec(path)?.[1
 
 /** The one page. Holds the state: theme, colour mode, selected player, open comp, team, tab, lambda. */
 export function Dashboard({ initial }: { initial: Initial }) {
-  const [theme] = useTheme();
+  const [theme, toggleTheme] = useTheme();
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Data: the selected player's file comes with the page; the rest loads in the browser.
@@ -61,9 +67,24 @@ export function Dashboard({ initial }: { initial: Initial }) {
   const [teamCode, setTeamCode] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(initial.selected?.player.id ?? null);
   const [files, setFiles] = useState<Record<string, PlayerFile>>(() => (initial.selected ? { [initial.selected.player.id]: initial.selected.file } : {}));
-  const [comparingId, setComparingId] = useState<string | null>(null);
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("legends");
+  const [lambda, setLambda] = useState(0);
+  const [profiles, setProfiles] = useState<Profiles | null>(null);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const aboutRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const comparingId = hoverId ?? openId;
+  const setComparingId = (id: null) => {
+    setHoverId(id);
+    setOpenId(id);
+  };
 
   const team = teams.find((t) => t.code === teamCode) ?? null;
+  useEffect(() => {
+    if (teamCode) setTab("team");
+  }, [teamCode]);
   const selected = selectedId ? (byId.get(selectedId) ?? null) : null;
   const file = selectedId ? (files[selectedId] ?? null) : null;
 
@@ -78,9 +99,32 @@ export function Dashboard({ initial }: { initial: Initial }) {
     };
   }, [selectedId, files]);
 
+  // The slider loads profiles.json once, the first time it moves.
+  useEffect(() => {
+    if (lambda === 0 || profiles) return;
+    let off = false;
+    fetchProfiles()
+      .then((p) => !off && setProfiles(p))
+      .catch(() => !off && setLoadFailed(true));
+    return () => {
+      off = true;
+    };
+  }, [lambda, profiles]);
+
+  // At lambda 0 the list is the precomputed one (the parity test checks they agree); otherwise score.ts.
+  const compIds = useMemo(() => {
+    if (!file || !selectedId) return [];
+    if (lambda === 0 || !profiles) return file.comps.map((c) => c[0]);
+    const i = profiles.ids.indexOf(selectedId);
+    return i < 0 ? file.comps.map((c) => c[0]) : topK(careerScores(profiles, i, lambda), 10).map((j) => profiles.ids[j]);
+  }, [file, selectedId, lambda, profiles]);
+  const comps = compIds.flatMap((id) => byId.get(id) ?? []);
+
   const select = useCallback((id: string | null) => {
     setSelectedId(id);
-    setComparingId(null);
+    setHoverId(null);
+    setOpenId(null);
+    panelRef.current?.scrollTo({ top: 0 });
     const path = id ? `/player/${id}` : "/";
     if (window.location.pathname !== path) window.history.pushState(null, "", path);
   }, []);
@@ -90,6 +134,7 @@ export function Dashboard({ initial }: { initial: Initial }) {
     const onPop = () => {
       setSelectedId(idFromPath(window.location.pathname));
       setComparingId(null);
+      setLambda(0);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -111,7 +156,10 @@ export function Dashboard({ initial }: { initial: Initial }) {
           mode={mode}
           onMode={setMode}
           team={team}
-          onTeam={setTeamCode}
+          onTeam={(code) => {
+            setTeamCode(code);
+            if (code) setTab("team");
+          }}
           selected={selected}
           comparing={comparingId ? (byId.get(comparingId) ?? null) : null}
           onSelect={select}
@@ -122,13 +170,77 @@ export function Dashboard({ initial }: { initial: Initial }) {
         />
       </motion.div>
       <div className="flex min-h-0 flex-col gap-6">
-        <motion.header {...rise(1)} className="card flex h-[58px] shrink-0 items-center px-5">
-          <h1 className="dot-heading text-[28px] leading-none">GreenFN</h1>
+        <motion.header {...rise(1)} className="card h-[58px] shrink-0">
+          <h1 className="sr-only">GreenFN: NBA career comps</h1>
+          <BrandBlock theme={theme} onToggleTheme={toggleTheme} aboutOpen={aboutOpen} onAbout={() => setAboutOpen((o) => !o)} aboutRef={aboutRef} />
         </motion.header>
-        <motion.section {...rise(2)} className="card min-h-0 flex-1 p-5">
-          <p className="label">{selected ? selected.name : "Start here"}</p>
-          {file && <p className="mt-2 text-muted">{file.comps.length} comps</p>}
-        </motion.section>
+        <motion.div {...rise(2)} className="relative min-h-0 flex-1">
+          <AnimatePresence>
+            {aboutOpen && (
+              <AboutCard
+                attribution={initial.attribution}
+                onClose={() => {
+                  setAboutOpen(false);
+                  aboutRef.current?.focus();
+                }}
+              />
+            )}
+          </AnimatePresence>
+          <section className="card h-full min-h-0 overflow-hidden" aria-label={selected ? `${selected.name}: player and similar careers` : "Start here"}>
+            <AnimatePresence mode="wait" initial={false}>
+              {selected ? (
+                <motion.div
+                  key={`p-${selected.id}`}
+                  ref={panelRef}
+                  initial={{ opacity: 0, x: 14 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -14 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="scroll-thin h-full overflow-y-auto"
+                >
+                  <div className="sticky top-0 z-10 mb-4 flex items-center justify-between border-b border-border bg-surface px-5 py-[13px]">
+                    <span className="label">
+                      <span className="step">02</span>Player
+                    </span>
+                    <button type="button" onClick={() => select(null)} className="label transition-colors duration-[120ms] hover:text-ink">
+                      Clear <span aria-hidden="true">×</span>
+                    </button>
+                  </div>
+                  <PlayerCard player={selected} region={initial.regions[selected.region] ?? null} lambda={lambda} onLambda={setLambda} busy={lambda > 0 && !profiles} />
+                  {file ? (
+                    <CompList
+                      comps={comps}
+                      why={file.why}
+                      labels={initial.labels}
+                      features={initial.features}
+                      regions={initial.regions}
+                      openId={openId}
+                      onToggle={(id) => setOpenId((o) => (o === id ? null : id))}
+                      onHover={setHoverId}
+                      onSelect={select}
+                    />
+                  ) : (
+                    <p className="px-5 text-muted">{loadFailed ? "This player could not be loaded." : "Loading comps..."}</p>
+                  )}
+                </motion.div>
+              ) : (
+                <motion.div key="start" className="h-full" initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 14 }} transition={{ duration: 0.2, ease: "easeOut" }}>
+                  <StartCard
+                    tab={tab}
+                    onTab={setTab}
+                    legends={initial.legends}
+                    team={team}
+                    teams={teams}
+                    byId={byId}
+                    onSelect={select}
+                    onTeam={(code) => setTeamCode(code)}
+                    onSearch={() => searchRef.current?.focus()}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
+        </motion.div>
       </div>
     </main>
   );

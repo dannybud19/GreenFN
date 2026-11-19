@@ -112,6 +112,7 @@ Empty state (nobody selected): map only, search centred and larger, legend, note
 | Zoom | Semantic zoom: far out shows density, mid shows points, close shows season labels on the selected career |
 | Interaction | Drag to pan, scroll to zoom, hover a point for a tooltip (player, season, team-free), click a point to select that player |
 | 3D | See section 6 |
+| Regions | Nine named regions (k-means on the 2D map, computed in `src/export_web.py`) colour the dots in Region mode and tag each comp. They are a reading aid on the 2D picture, not a model output |
 
 ## 5. Micro-interactions (motion.dev)
 
@@ -159,3 +160,4 @@ Recommendation: ship 2D with depth effects (glow, parallax on panels, slight til
 |---|---|
 | 19 Nov 2026 | Draft 1 |
 | 19 Nov 2026 | Matched to the wireframes: why-similar moved to the left column under the player card; phone sheet uses tabs |
+| 19 Nov 2026 | Phase 7b: map regions noted as a reading aid, not a model output |

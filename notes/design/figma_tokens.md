@@ -28,13 +28,13 @@ Map dots: light theme draws dots at about 55% alpha on white (pastel look); dark
 
 | Role | Font | Size / weight / tracking |
 |---|---|---|
-| Wordmark GREENFN | Doto 900 | 28 px, uppercase |
-| Hero heading (FIND YOUR PLAYER, player name) | Doto 900 | 34 px, line-height 1.05 |
-| Team code in A1 (CHI) | Doto 900 | 40 px |
+| Wordmark GREENFN | Doto 900 | 24 px, uppercase |
+| Hero heading (FIND YOUR PLAYER, player name) | Doto 900 | 30 px, line-height 33 px |
+| Team code in A1 (CHI) | Doto 900 | 32 px |
 | Row numbers (01 to 10) | Doto 900 | 16 px, `faint` |
 | Micro-labels (YOUR PLAYER, KEY) | Geist Mono 500 | 11 px, uppercase, 0.09em, `muted`; step number in `ink` 600 |
-| Body | Geist Mono 400 | 13 px, line-height 20 px |
-| Row names | Geist Mono 600 | 13.5 px |
+| Body | Geist Mono 400 | 12.5 px, line-height 20 px |
+| Row names | Geist Mono 600 | 13 px |
 | Row sub (years) | Geist Mono 400 | 11.5 px, `muted` |
 | Pills, tabs, inputs | Geist Mono 400/500 | 12.5 px (input 13.5 px) |
 | Grid letters and numbers | Geist Mono 400 | 10 px, `axis` |
@@ -69,3 +69,5 @@ Map dots: light theme draws dots at about 55% alpha on white (pastel look); dark
 Containers 20 · inner boxes (KEY, zoom, why card) 12 · inputs and tabs 10 / 8 · pills 999.
 
 ## No shadows, no gradients
+
+Type sizes re-measured from glyph advance widths in the renders (Doto and Geist Mono advance 0.6 em) after the first build; first estimates were about 15% large.

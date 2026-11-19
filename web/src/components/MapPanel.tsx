@@ -439,7 +439,7 @@ export function MapPanel(props: Props) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="dot-heading block text-[40px] leading-none text-ink"
+                  className="dot-heading block text-[32px] leading-none text-ink"
                   style={{ textBoxTrim: "trim-both", textBoxEdge: "cap alphabetic" } as React.CSSProperties}
                 >
                   {team.code.slice(0, typed)}
