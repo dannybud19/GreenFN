@@ -121,17 +121,14 @@ export function zoomAround(t: Transform, k2: number, px: number, py: number): Tr
 }
 
 /**
- * Keeps the scale in [K_MIN, K_MAX] and the dots from being dragged out of view: at least `margin` px of the
- * dots' bounding box (in base coordinates) stays inside the w x h plot on each axis.
+ * Keeps the scale in [K_MIN, K_MAX] and the 1x frame covering the w x h container: x in [w(1 - k), 0] and
+ * y in [h(1 - k), 0]. At 1x that pins the map (x = y = 0); zoomed in, the frame's edges can reach the container's
+ * edges but never come inside them.
  */
-export function clampT(t: Transform, box: Box, w: number, h: number, margin = 60): Transform {
+export function clampT(t: Transform, w: number, h: number): Transform {
   const k = Math.min(K_MAX, Math.max(K_MIN, t.k));
-  const fix = (v: number, lo: number, hi: number) => (lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, v)));
-  return {
-    k,
-    x: fix(t.x, margin - box.maxX * k, w - margin - box.minX * k),
-    y: fix(t.y, margin - box.maxY * k, h - margin - box.minY * k),
-  };
+  const fix = (v: number, lo: number) => Math.min(0, Math.max(lo, v));
+  return { k, x: fix(t.x, w * (1 - k)), y: fix(t.y, h * (1 - k)) };
 }
 
 /** Base (1x) screen positions of every point and their bounding box. */

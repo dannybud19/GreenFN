@@ -68,16 +68,6 @@ function buckets(pts: Points, mode: ColourMode): number[][] {
 
 const clampK = (k: number) => Math.min(K_MAX, Math.max(K_MIN, k));
 
-/** True if at least one dot is inside the w x h plot under transform t (stops at the first one found). */
-function anyInView(bx: Float32Array, by: Float32Array, t: Transform, w: number, h: number): boolean {
-  for (let i = 0; i < bx.length; i++) {
-    const x = bx[i] * t.k + t.x;
-    const y = by[i] * t.k + t.y;
-    if (x >= 0 && x <= w && y >= 0 && y <= h) return true;
-  }
-  return false;
-}
-
 /** The team code types in letter by letter (Doto); untyped letters keep their space so the code stays centred. */
 function TypedCode({ code, instant }: { code: string; instant: boolean }) {
   const [typed, setTyped] = useState(instant ? code.length : 0);
@@ -203,15 +193,14 @@ export function MapPanel(props: Props) {
   }, [requestDraw]);
 
   /**
-   * Set the transform (clamped). A move that would leave no dot at all in view is refused, so the dots can never
-   * be dragged or zoomed fully out of sight. The canvas redraws on the next frame; React state follows once per frame.
+   * Set the transform, clamped so the 1x frame always covers the plot (at 1x the map cannot move). Every drag,
+   * wheel, pinch, button zoom and resize goes through here. The canvas redraws on the next frame; React state
+   * follows once per frame.
    */
   const commit = useCallback(
     (next: Transform) => {
       if (!base) return;
-      const c = clampT(next, base.box, size.w, size.h);
-      if (c.k > 1 && !anyInView(base.bx, base.by, c, size.w, size.h)) return;
-      tRef.current = c;
+      tRef.current = clampT(next, size.w, size.h);
       requestDraw();
       if (!stateFrame.current)
         stateFrame.current = requestAnimationFrame(() => {
@@ -222,12 +211,10 @@ export function MapPanel(props: Props) {
     [base, size, requestDraw],
   );
 
-  // A new plot size or data set starts again at 1x, centred.
+  // A resize (or new data) keeps the current zoom, re-clamped to the new plot size.
   useEffect(() => {
-    tRef.current = IDENTITY;
-    const id = requestAnimationFrame(() => setT(IDENTITY));
-    return () => cancelAnimationFrame(id);
-  }, [base]);
+    commit(tRef.current);
+  }, [commit]);
 
   /** Eased zoom (buttons, double-click, reset). With an anchor the point under it stays put; jumps under reduced motion. */
   const animateTo = useCallback(
@@ -256,7 +243,7 @@ export function MapPanel(props: Props) {
       if (!base) return;
       const p: [number, number] = at ?? [size.w / 2, size.h / 2];
       const k2 = clampK(tRef.current.k * f);
-      animateTo(clampT(zoomAround(tRef.current, k2, p[0], p[1]), base.box, size.w, size.h), p);
+      animateTo(clampT(zoomAround(tRef.current, k2, p[0], p[1]), size.w, size.h), p);
     },
     [animateTo, base, size],
   );
@@ -521,7 +508,7 @@ export function MapPanel(props: Props) {
           {COLS.map((c, i) => {
             const x = colX(i + 0.5);
             return x < 0 || x > size.w ? null : (
-              <span key={c} className="absolute -top-[17px] -translate-x-1/2 text-[10px] text-axis" style={{ left: x }}>
+              <span key={c} data-col-label={i} className="absolute -top-[17px] -translate-x-1/2 text-[10px] text-axis" style={{ left: x }}>
                 {c}
               </span>
             );
@@ -531,7 +518,7 @@ export function MapPanel(props: Props) {
           {ROWS.map((r, i) => {
             const y = rowY(i + 0.5);
             return y < 0 || y > size.h ? null : (
-              <span key={r} className="absolute left-0 -translate-y-1/2 text-[10px] text-axis" style={{ top: y }}>
+              <span key={r} data-row-label={i} className="absolute left-0 -translate-y-1/2 text-[10px] text-axis" style={{ top: y }}>
                 {r}
               </span>
             );
@@ -555,13 +542,15 @@ export function MapPanel(props: Props) {
           onDoubleClick={onDoubleClick}
           onKeyDown={onKeyDown}
           data-zoom={t.k.toFixed(2)}
+          data-tx={t.x.toFixed(2)}
+          data-ty={t.y.toFixed(2)}
         >
           <svg aria-hidden="true" className="absolute inset-0 size-full">
             {Array.from({ length: 9 }, (_, i) => (
-              <line key={`v${i}`} x1={colX(i)} x2={colX(i)} y1={rowY(0)} y2={rowY(6)} stroke="var(--grid)" shapeRendering="crispEdges" />
+              <line key={`v${i}`} data-col-line={i} x1={colX(i)} x2={colX(i)} y1={rowY(0)} y2={rowY(6)} stroke="var(--grid)" shapeRendering="crispEdges" />
             ))}
             {Array.from({ length: 7 }, (_, i) => (
-              <line key={`h${i}`} y1={rowY(i)} y2={rowY(i)} x1={colX(0)} x2={colX(8)} stroke="var(--grid)" shapeRendering="crispEdges" />
+              <line key={`h${i}`} data-row-line={i} y1={rowY(i)} y2={rowY(i)} x1={colX(0)} x2={colX(8)} stroke="var(--grid)" shapeRendering="crispEdges" />
             ))}
           </svg>
 

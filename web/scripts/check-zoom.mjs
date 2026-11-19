@@ -114,15 +114,9 @@ const redDot = (page) =>
   await page.mouse.move(rect.x + 400 + 5000, rect.y + 300 + 5000, { steps: 10 });
   await page.mouse.up();
   await page.waitForTimeout(200);
-  const visible = await page.evaluate(() => {
-    const c = document.querySelector("[aria-roledescription=map] canvas");
-    const ctx = c.getContext("2d");
-    const d = ctx.getImageData(0, 0, c.width, c.height).data;
-    let n = 0;
-    for (let i = 3; i < d.length; i += 4 * 16) if (d[i] > 0) n++;
-    return n;
-  });
-  check("panning is limited: dots stay in view", visible > 50, `${visible} sampled dot pixels`);
+  const tf = await plot.evaluate((e) => ({ k: +e.dataset.zoom, x: +e.dataset.tx, y: +e.dataset.ty }));
+  const covers = tf.x <= 0.01 && tf.x >= rect.width * (1 - tf.k) - 0.01 && tf.y <= 0.01 && tf.y >= rect.height * (1 - tf.k) - 0.01;
+  check("panning is limited: the 1x frame still covers the map", covers, JSON.stringify(tf));
 
   // A short click (under 4 px) still selects the season under it.
   await page.keyboard.press("0");
