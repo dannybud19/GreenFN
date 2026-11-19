@@ -30,7 +30,7 @@ const rowClass =
   "group flex w-full items-center gap-4 border-b border-border py-[11px] text-left transition-colors duration-[120ms] hover:bg-tint focus-visible:bg-tint";
 
 function Num({ i }: { i: number }) {
-  return <span className="dot-heading w-6 shrink-0 text-[16px] leading-none text-faint">{String(i + 1).padStart(2, "0")}</span>;
+  return <span className="dot-heading w-6 shrink-0 text-[16px] leading-none text-muted">{String(i + 1).padStart(2, "0")}</span>;
 }
 
 /** START HERE / FIND YOUR PLAYER, the three tabs and their lists (the list scrolls inside the card). */

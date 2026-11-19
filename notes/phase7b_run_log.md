@@ -22,7 +22,7 @@ Status: finished
 - **Type sizes.** The first token pass overestimated the Doto and body sizes by about 15%. They were re-measured from glyph advance widths (wordmark 24, hero 30, team code 32, body 12.5).
 - **Breakpoint bug (production only).** `min-[1200px]:` sorted before `md:` (48rem), so 1440 px showed the tablet layout. A `--breakpoint-xl: 75rem` (1200 px) sorts correctly.
 - **Custom CSS beat utilities.** `.label` was unlayered, so `text-ink` on "START HERE" was ignored. Moved into `@layer components`.
-- **Contrast.** Lighthouse flagged the light `muted` grey `#7A7A76` at 4.3:1. It was darkened to `#6E6E6A` to pass WCAG AA. The faint Doto row numbers (`#B4B4AE`, 2.1:1) are kept as designed: the rank is also given by list order.
+- **Contrast.** Lighthouse flagged the light `muted` grey `#7A7A76` at 4.3:1. It was darkened to `#6E6E6A` to pass WCAG AA. The faint row numbers (`#B4B4AE`, 2.1:1) were first kept as designed; in the follow-ups they use the label grey (5.12:1 light, 5.83:1 dark).
 - **Lint.** Six React hooks errors (setState in effects, refs read during render) fixed without changing behaviour. `npx eslint src scripts` is clean.
 - **Why-similar sentence.** The frames say "Both used a lot of their team's possessions, took a lot of shots...". A positive attribution means the two careers are alike on a stat, not that both are high, so the 15 phrases name the stat instead ("Both match closely on how much of the offence ran through them, how often they shot and how often they got steals.").
 - **Attribution.** The old footer is gone (one page). The data attribution from `meta.json` now sits in the About card, with the note that the map and regions are a reading aid.
@@ -31,7 +31,10 @@ Status: finished
 
 | Change | Commit | Notes |
 |---|---|---|
-| Vercel Root Directory set to `web` with the CLI (`vercel api` PATCH) | none (project setting) | Preview redeployed |
+| Vercel Root Directory set to `web` with the CLI (`vercel api` PATCH) | none (project setting) | Failed preview redeployed: ready in 2 min |
+| Region 7 named "Ball-dominant guards" | 86d314f | Fixed override keyed on the cluster's top-3 stats |
+| Why rows scroll in their own box | 981eb5a | Own top border, snap to whole rows, short top and bottom fades |
+| Row numbers in the label grey; ESC button name includes "ESC" | this commit | Lighthouse accessibility 100 on `/` and on `/player/jordami01` |
 
 ## Key numbers
 - Motion version / Next.js version: motion 14.14.0, Next.js 16.4.6, React 19.3.0, Playwright 1.65.1 (dev only)
@@ -50,7 +53,7 @@ Status: finished
 - Data size committed: `web/public/data/` 4.93 MB (4,925,008 bytes, 2,475 files); map.json 0.44 MB, teams.json 0.02 MB, regions.json and legends.json under 1 KB
 - Tests (count) and parity (top-1 / top-10 set): 31 pass (17 from Phase 7 plus 14 new); parity top-1 100.00% (2,467 of 2,467), top-10 set 99.88% (2,464), exact order 99.64%
 - Build: pages generated: 2,471 (2,467 player pages, /, /_not-found and build internals); `npm run build` passes; ESLint and TypeScript clean
-- Lighthouse accessibility: 97 on `/` (only the faint row numbers flagged), 100 on `/player/jordami01`; performance 100, best practices 100 on both
+- Lighthouse accessibility: 100 on `/` and on `/player/jordami01` after the follow-ups (first run: 97 on `/`, only the faint row numbers flagged); performance 100, best practices 100 on both
 - Screenshots taken: 20 in `notes/design/built/` (start, legends, team CHI, player Jordan, Kobe comp open with inner scroll, About open, phone and phone start, in light and dark; player and comp under reduced motion in both themes)
 - Local checks (next start): `/` 200; `/player/jordami01` 200 and contains "Kobe Bryant"; `/player/doesnotexist` 404; `/map` and `/about` 308 to `/`. In the browser: lambda 1 reorders Jordan's comps and "Back to default" restores them; theme toggle sets `data-theme` and persists after reload; keyboard reaches every control (`/`, arrows, Enter picks a player; Enter opens a comp)
 

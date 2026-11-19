@@ -128,7 +128,7 @@ export function SearchBox({ players, selectedName, onSelect, onClear, inputRef, 
             onMouseDown={(e) => e.preventDefault()}
             onClick={clear}
             className="rounded-[5px] border border-border px-1.5 text-[10px] leading-[18px] text-muted transition-colors duration-[120ms] hover:bg-tint hover:text-ink"
-            aria-label="Clear search"
+            aria-label="ESC: clear search"
           >
             ESC
           </button>

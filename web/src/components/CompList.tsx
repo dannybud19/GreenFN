@@ -138,7 +138,7 @@ export function CompList({ comps, why, labels, features, regions, openId, onTogg
                   whileTap={{ scale: 0.99 }}
                   className="flex h-[42px] w-full items-center gap-3 text-left transition-colors duration-[120ms] hover:bg-tint"
                 >
-                  <span className="w-6 shrink-0 text-[13px] text-faint tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="w-6 shrink-0 text-[13px] text-muted tabular-nums">{String(i + 1).padStart(2, "0")}</span>
                   <span className="truncate text-[13px] font-semibold">{c.name}</span>
                   {region && <span className="shrink-0 rounded-full border border-border px-2 text-[11px] leading-[18px] text-muted">{region.name}</span>}
                   <span className="sr-only">, {years(c.first, c.last)}</span>
