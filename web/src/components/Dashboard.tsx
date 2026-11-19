@@ -73,18 +73,12 @@ export function Dashboard({ initial }: { initial: Initial }) {
   const [lambda, setLambda] = useState(0);
   const [profiles, setProfiles] = useState<Profiles | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const aboutRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const comparingId = hoverId ?? openId;
-  const setComparingId = (id: null) => {
-    setHoverId(id);
-    setOpenId(id);
-  };
 
   const team = teams.find((t) => t.code === teamCode) ?? null;
-  useEffect(() => {
-    if (teamCode) setTab("team");
-  }, [teamCode]);
   const selected = selectedId ? (byId.get(selectedId) ?? null) : null;
   const file = selectedId ? (files[selectedId] ?? null) : null;
 
@@ -133,7 +127,8 @@ export function Dashboard({ initial }: { initial: Initial }) {
   useEffect(() => {
     const onPop = () => {
       setSelectedId(idFromPath(window.location.pathname));
-      setComparingId(null);
+      setHoverId(null);
+      setOpenId(null);
       setLambda(0);
     };
     window.addEventListener("popstate", onPop);
@@ -145,8 +140,8 @@ export function Dashboard({ initial }: { initial: Initial }) {
   }, [selected]);
 
   return (
-    <main className="grid h-dvh min-h-[640px] grid-cols-[minmax(0,1fr)_432px] gap-6 p-10">
-      <motion.div {...rise(0)} className="min-h-0">
+    <main className="flex flex-col gap-4 p-4 pb-[calc(44dvh+16px)] md:grid md:h-dvh md:min-h-[640px] md:grid-cols-[minmax(0,1fr)_340px] md:gap-6 md:p-6 min-[1200px]:grid-cols-[minmax(0,1fr)_432px] min-[1200px]:p-10">
+      <motion.div {...rise(0)} className="min-h-0 max-md:order-2">
         <MapPanel
           pts={pts}
           players={players}
@@ -169,12 +164,24 @@ export function Dashboard({ initial }: { initial: Initial }) {
           loadFailed={loadFailed}
         />
       </motion.div>
-      <div className="flex min-h-0 flex-col gap-6">
-        <motion.header {...rise(1)} className="card h-[58px] shrink-0">
+      <div className="flex min-h-0 flex-col gap-6 max-md:contents">
+        <motion.header {...rise(1)} className="card h-[58px] shrink-0 max-md:order-1">
           <h1 className="sr-only">GreenFN: NBA career comps</h1>
           <BrandBlock theme={theme} onToggleTheme={toggleTheme} aboutOpen={aboutOpen} onAbout={() => setAboutOpen((o) => !o)} aboutRef={aboutRef} />
         </motion.header>
-        <motion.div {...rise(2)} className="relative min-h-0 flex-1">
+        <motion.div
+          {...rise(2)}
+          className={`relative min-h-0 flex-1 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-30 max-md:transition-[height] max-md:duration-300 ${sheetOpen ? "max-md:h-[86dvh]" : "max-md:h-[44dvh]"}`}
+        >
+          <button
+            type="button"
+            onClick={() => setSheetOpen((o) => !o)}
+            aria-expanded={sheetOpen}
+            aria-label={sheetOpen ? "Shrink the panel" : "Expand the panel"}
+            className="absolute -top-0 left-1/2 z-20 flex h-6 w-16 -translate-x-1/2 items-center justify-center md:hidden"
+          >
+            <span aria-hidden="true" className="block h-1 w-10 rounded-full bg-faint" />
+          </button>
           <AnimatePresence>
             {aboutOpen && (
               <AboutCard
@@ -186,7 +193,7 @@ export function Dashboard({ initial }: { initial: Initial }) {
               />
             )}
           </AnimatePresence>
-          <section className="card h-full min-h-0 overflow-hidden" aria-label={selected ? `${selected.name}: player and similar careers` : "Start here"}>
+          <section className="card h-full min-h-0 overflow-hidden max-md:rounded-b-none max-md:border-b-0 max-md:pt-4" aria-label={selected ? `${selected.name}: player and similar careers` : "Start here"}>
             <AnimatePresence mode="wait" initial={false}>
               {selected ? (
                 <motion.div
@@ -233,7 +240,10 @@ export function Dashboard({ initial }: { initial: Initial }) {
                     teams={teams}
                     byId={byId}
                     onSelect={select}
-                    onTeam={(code) => setTeamCode(code)}
+                    onTeam={(code) => {
+                      setTeamCode(code);
+                      setTab("team");
+                    }}
                     onSearch={() => searchRef.current?.focus()}
                   />
                 </motion.div>

@@ -49,6 +49,28 @@ function buckets(pts: Points, mode: ColourMode): number[][] {
   return out;
 }
 
+/** The team code types in letter by letter (Doto); untyped letters keep their space so the code stays centred. */
+function TypedCode({ code, instant }: { code: string; instant: boolean }) {
+  const [typed, setTyped] = useState(instant ? code.length : 0);
+  useEffect(() => {
+    if (instant) return;
+    let n = 0;
+    const t = setInterval(() => {
+      n += 1;
+      setTyped(n);
+      if (n >= code.length) clearInterval(t);
+    }, 90);
+    return () => clearInterval(t);
+  }, [code, instant]);
+  const shown = instant ? code.length : typed;
+  return (
+    <>
+      {code.slice(0, shown)}
+      <span className="invisible">{code.slice(shown)}</span>
+    </>
+  );
+}
+
 export function MapPanel(props: Props) {
   const { pts, byId, team, selected, comparing, mode, theme } = props;
   const reduce = useReducedMotion();
@@ -93,8 +115,11 @@ export function MapPanel(props: Props) {
     [pts],
   );
   const teamIdx = useMemo(() => (pts && team ? teamIndices(pts, team.code) : []), [pts, team]);
+  // The last team stays drawn while its dots fade out after the team is cleared.
   const lastTeamIdx = useRef<number[]>([]);
-  if (teamIdx.length) lastTeamIdx.current = teamIdx;
+  useEffect(() => {
+    if (teamIdx.length) lastTeamIdx.current = teamIdx;
+  }, [teamIdx]);
 
   const draw = useCallback(() => {
     frame.current = 0;
@@ -335,19 +360,6 @@ export function MapPanel(props: Props) {
   const tagLeft = anchor ? (anchor.px + 64 + tagW > size.w ? anchor.px - 64 - tagW : anchor.px + 64) : 0;
   const tagTop = anchor ? Math.max(anchor.py - 46, 4) : 0;
 
-  // Team code in A1 types in letter by letter.
-  const [typed, setTyped] = useState(0);
-  useEffect(() => {
-    setTyped(reduce ? 3 : 0);
-    if (!team || reduce) return;
-    let n = 0;
-    const t = setInterval(() => {
-      n += 1;
-      setTyped(n);
-      if (n >= team.code.length) clearInterval(t);
-    }, 90);
-    return () => clearInterval(t);
-  }, [team, reduce]);
 
   const extras: KeyExtra[] = [];
   if (team) extras.push({ label: `${team.short} season`, colour: "var(--ink)" });
@@ -359,9 +371,9 @@ export function MapPanel(props: Props) {
   const cellH = size.h / 6;
 
   return (
-    <section className="card relative flex h-full min-h-0 flex-col p-5" aria-label="Map of every NBA season since 1980">
-      <div className="grid grid-cols-1 gap-x-7 gap-y-3 md:grid-cols-[minmax(0,358px)_minmax(0,170px)_1fr]">
-        <div>
+    <section className="card relative flex min-h-0 flex-col p-4 md:h-full md:p-5" aria-label="Map of every NBA season since 1980">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2 min-[1200px]:grid-cols-[minmax(0,358px)_minmax(0,170px)_1fr] min-[1200px]:gap-x-7">
+        <div className="md:col-span-2 min-[1200px]:col-span-1">
           <label htmlFor="player-search" className="label block" onClick={() => props.searchRef.current?.focus()}>
             <span className="step">01</span>Your player
           </label>
@@ -387,7 +399,7 @@ export function MapPanel(props: Props) {
         </div>
       </div>
 
-      <div className="relative mx-[1px] mt-11 mb-5 min-h-[260px] flex-1 pl-5 md:mr-[19px] md:ml-[1px]">
+      <div className="relative mt-11 mb-5 h-[300px] pl-5 md:h-auto md:min-h-[260px] md:flex-1 min-[1200px]:mr-[19px] min-[1200px]:ml-[1px]">
         {/* Column letters and row numbers sit outside the plot. */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 left-5">
           {COLS.map((c, i) => (
@@ -442,8 +454,7 @@ export function MapPanel(props: Props) {
                   className="dot-heading block text-[32px] leading-none text-ink"
                   style={{ textBoxTrim: "trim-both", textBoxEdge: "cap alphabetic" } as React.CSSProperties}
                 >
-                  {team.code.slice(0, typed)}
-                  <span className="invisible">{team.code.slice(typed)}</span>
+                  <TypedCode code={team.code} instant={Boolean(reduce)} />
                 </motion.span>
               )}
             </AnimatePresence>
@@ -517,7 +528,7 @@ export function MapPanel(props: Props) {
           </AnimatePresence>
 
           <AnimatePresence>
-            {hover && hoverPlayer && !drag.current?.moved && (
+            {hover && hoverPlayer && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -537,7 +548,7 @@ export function MapPanel(props: Props) {
         </div>
       </div>
 
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <Key entries={legendEntries(mode, props.regions)} extras={extras} />
         <ZoomControl zoom={zoomTarget} onZoom={zoomTo} />
       </div>

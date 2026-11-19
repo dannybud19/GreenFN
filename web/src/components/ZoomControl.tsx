@@ -16,7 +16,6 @@ export function ZoomControl({ zoom, onZoom }: { zoom: number; onZoom: (z: number
   useEffect(() => {
     if (reduce) {
       from.current = zoom;
-      setShown(zoom);
       return;
     }
     const c = animate(from.current, zoom, {
@@ -38,7 +37,7 @@ export function ZoomControl({ zoom, onZoom }: { zoom: number; onZoom: (z: number
         −
       </motion.button>
       <span className="w-[38px] text-center text-[13px] tabular-nums" aria-hidden="true">
-        {shown.toFixed(1)}×
+        {(reduce ? zoom : shown).toFixed(1)}×
       </span>
       <span className="sr-only" aria-live="polite">{`Zoom ${zoom.toFixed(1)} times`}</span>
       <motion.button type="button" whileTap={{ scale: 0.97 }} className={btn} aria-label="Zoom in" disabled={zoom >= ZOOM_MAX} onClick={() => onZoom(Math.min(ZOOM_MAX, zoom + ZOOM_STEP))}>
