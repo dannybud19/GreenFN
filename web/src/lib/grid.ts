@@ -78,8 +78,8 @@ export function computeGrid(t: Transform, box: Box, w: number, h: number): Grid 
   };
 }
 
-// Number layout (10 px Geist Mono: 6 px per character, about 12 px tall).
-export const LABEL = { charW: 6, h: 12, gapTop: 6, gapLeft: 8, tick: 4 };
+// Number layout (10 px Geist Mono: 6 px per character; the text box measures 13 px tall, so 14 with a margin).
+export const LABEL = { charW: 6, h: 14, gapTop: 6, gapLeft: 8, tick: 4 };
 
 export type Label = { v: number; text: string; x: number; y: number; tick: [number, number, number, number] };
 
@@ -87,7 +87,9 @@ export type Label = { v: number; text: string; x: number; y: number; tick: [numb
  * Numbers for every major line in view. Across numbers sit 6 px above the grid's top edge, down numbers 8 px left
  * of its left edge, each centred on its own line with a 4 px tick from the edge towards the number. When the edge
  * is off screen they stick to the visible top / left of the map area with the same gaps. If two numbers would
- * collide, every other one is skipped. Positions: across = (centre x, bottom y); down = (right x, centre y).
+ * collide, every other one is skipped. A row of numbers is shown only while its lines are in view (zoomed in and
+ * panned past the frame, the grid can be entirely off screen). Positions: across = (centre x, bottom y);
+ * down = (right x, centre y).
  */
 export function layoutLabels(g: Grid, w: number, h: number): { across: Label[]; down: Label[]; top: number; left: number } {
   const text = (v: number) => v.toFixed(g.decimals);
@@ -103,8 +105,11 @@ export function layoutLabels(g: Grid, w: number, h: number): { across: Label[]; 
     while (min * s < need && s < 8) s *= 2;
     return s;
   };
-  const xsIn = majorsX.filter((l) => l.px >= left - 0.5 && l.px <= w);
-  const ysIn = majorsY.filter((l) => l.px >= top - 0.5 && l.px <= h);
+  // Vertical lines run from the grid's top to its bottom: the across row needs them in view below the numbers.
+  const acrossInView = g.span.y1 >= top && top <= h;
+  const downInView = g.span.x1 >= left && left <= w;
+  const xsIn = acrossInView ? majorsX.filter((l) => l.px >= left - 0.5 && l.px <= w) : [];
+  const ysIn = downInView ? majorsY.filter((l) => l.px >= top - 0.5 && l.px <= h) : [];
   const sx = stride(xsIn.slice(1).map((l, i) => l.px - xsIn[i].px), Math.max(...xsIn.map((l) => text(l.v).length), 1) * LABEL.charW + 6);
   const sy = stride(ysIn.slice(1).map((l, i) => l.px - ysIn[i].px), LABEL.h + 2);
   const keep = (l: GridLine, s: number) => Math.round(l.v / g.major) % s === 0;

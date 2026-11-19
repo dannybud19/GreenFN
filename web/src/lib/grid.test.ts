@@ -65,6 +65,15 @@ describe("map grid", () => {
     expect(lab.across.every((l) => l.x >= lab.left - 0.5 && l.x <= W)).toBe(true);
   });
 
+  it("shows no numbers for a grid that is entirely off screen", () => {
+    // Panned down so far that the grid's top edge is below the plot.
+    const g = computeGrid({ k: 4, x: 200, y: 150 }, box, W, H);
+    expect(g.span.y0).toBeGreaterThan(H);
+    const lab = layoutLabels(g, W, H);
+    expect(lab.across).toEqual([]);
+    expect(lab.down).toEqual([]);
+  });
+
   it("skips every other number rather than let two overlap", () => {
     // Squash the across axis so 10-unit lines are only 20 px apart.
     const g = computeGrid({ k: 1, x: 0, y: 0 }, { minX: 0, maxX: 200, minY: 0, maxY: 900 }, 300, 1000);
