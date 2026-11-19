@@ -24,10 +24,9 @@ import {
   type Points,
   type Transform,
 } from "@/lib/map";
+import { computeGrid } from "@/lib/grid";
 import type { Theme } from "@/lib/theme";
 
-const COLS = ["A", "B", "C", "D", "E", "F", "G", "H"];
-const ROWS = [1, 2, 3, 4, 5, 6];
 const DRAG_THRESHOLD = 4;
 const BUTTON_STEP = 2;
 
@@ -162,7 +161,17 @@ export function MapPanel(props: Props) {
       allBuckets[m].forEach((idx, j) => {
         if (!idx) return;
         ctx.fillStyle = cols[j % cols.length];
-        for (const i of idx) ctx.fillRect(bx[i] * k + tx - half, by[i] * k + ty - half, d, d);
+        if (k >= 3) {
+          // Zoomed in, the dots are drawn round.
+          ctx.beginPath();
+          for (const i of idx) {
+            const px = bx[i] * k + tx;
+            const py = by[i] * k + ty;
+            ctx.moveTo(px + half, py);
+            ctx.arc(px, py, half, 0, Math.PI * 2);
+          }
+          ctx.fill();
+        } else for (const i of idx) ctx.fillRect(bx[i] * k + tx - half, by[i] * k + ty - half, d, d);
       });
     };
     if (a.modeT < 1) pass(a.prevMode, alpha * (1 - a.modeT));
@@ -467,11 +476,14 @@ export function MapPanel(props: Props) {
   const hoverPlayer = hover !== null && pts ? byId.get(pts.player[hover]) : null;
   const hoverAt = hover !== null ? at(hover) : null;
 
-  // The grid moves and scales with the dots: lines at the transformed cell edges, labels at transformed centres.
-  const cellW = size.w / 8;
-  const cellH = size.h / 6;
-  const colX = (i: number) => i * cellW * t.k + t.x;
-  const rowY = (i: number) => i * cellH * t.k + t.y;
+  // The grid: 0 to 100 across the dots' bounding box, origin top-left, adaptive major and minor lines. Lines and
+  // labels come from the same transform, so they move and scale together with the dots.
+  const grid = base && size.w > 0 ? computeGrid(t, base.box, size.w, size.h) : null;
+  const label = (v: number) => v.toFixed(grid?.decimals ?? 0);
+  // The team code's cell: 0 to 10 by 0 to 10 at 1x (base coordinates), scaled with the map.
+  const teamCell = base
+    ? { x: base.box.minX, y: base.box.minY, w: (base.box.maxX - base.box.minX) / 10, h: (base.box.maxY - base.box.minY) / 10 }
+    : null;
 
   return (
     <section className="card relative flex min-h-0 flex-col p-4 md:h-full md:p-5" aria-label="Map of every NBA season since 1980" data-box="map">
@@ -503,26 +515,24 @@ export function MapPanel(props: Props) {
       </div>
 
       <div className="relative mt-11 mb-5 h-[300px] pl-5 md:h-auto md:min-h-[260px] md:flex-1 xl:mr-[19px] xl:ml-[1px]">
-        {/* Column letters and row numbers follow their columns and rows; off-screen ones are hidden. */}
+        {/* Grid numbers on the top and left edges, at the major lines in view. */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 left-5">
-          {COLS.map((c, i) => {
-            const x = colX(i + 0.5);
-            return x < 0 || x > size.w ? null : (
-              <span key={c} data-col-label={i} className="absolute -top-[17px] -translate-x-1/2 text-[10px] text-axis" style={{ left: x }}>
-                {c}
+          {grid?.xs
+            .filter((l) => l.major && l.px >= 0 && l.px <= size.w)
+            .map((l) => (
+              <span key={`x${l.v}`} data-gx-label={l.v} className="absolute -top-[17px] -translate-x-1/2 text-[10px] text-axis tabular-nums" style={{ left: l.px }}>
+                {label(l.v)}
               </span>
-            );
-          })}
+            ))}
         </div>
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-5">
-          {ROWS.map((r, i) => {
-            const y = rowY(i + 0.5);
-            return y < 0 || y > size.h ? null : (
-              <span key={r} data-row-label={i} className="absolute left-0 -translate-y-1/2 text-[10px] text-axis" style={{ top: y }}>
-                {r}
+          {grid?.ys
+            .filter((l) => l.major && l.px >= 0 && l.px <= size.h)
+            .map((l) => (
+              <span key={`y${l.v}`} data-gy-label={l.v} className="absolute right-[4px] -translate-y-1/2 text-[10px] text-axis tabular-nums" style={{ top: l.px }}>
+                {label(l.v)}
               </span>
-            );
-          })}
+            ))}
         </div>
 
         <div
@@ -546,21 +556,47 @@ export function MapPanel(props: Props) {
           data-ty={t.y.toFixed(2)}
         >
           <svg aria-hidden="true" className="absolute inset-0 size-full">
-            {Array.from({ length: 9 }, (_, i) => (
-              <line key={`v${i}`} data-col-line={i} x1={colX(i)} x2={colX(i)} y1={rowY(0)} y2={rowY(6)} stroke="var(--grid)" shapeRendering="crispEdges" />
-            ))}
-            {Array.from({ length: 7 }, (_, i) => (
-              <line key={`h${i}`} data-row-line={i} y1={rowY(i)} y2={rowY(i)} x1={colX(0)} x2={colX(8)} stroke="var(--grid)" shapeRendering="crispEdges" />
-            ))}
+            {grid && (
+              <>
+                <g opacity={grid.minorAlpha}>
+                  {grid.xs
+                    .filter((l) => !l.major)
+                    .map((l) => (
+                      <line key={`vx${l.v}`} x1={l.px} x2={l.px} y1={grid.span.y0} y2={grid.span.y1} stroke="var(--grid)" shapeRendering="crispEdges" />
+                    ))}
+                  {grid.ys
+                    .filter((l) => !l.major)
+                    .map((l) => (
+                      <line key={`hy${l.v}`} y1={l.px} y2={l.px} x1={grid.span.x0} x2={grid.span.x1} stroke="var(--grid)" shapeRendering="crispEdges" />
+                    ))}
+                </g>
+                {grid.xs
+                  .filter((l) => l.major)
+                  .map((l) => (
+                    <line key={`VX${l.v}`} data-gx={l.v} x1={l.px} x2={l.px} y1={grid.span.y0} y2={grid.span.y1} stroke="var(--grid-major)" shapeRendering="crispEdges" />
+                  ))}
+                {grid.ys
+                  .filter((l) => l.major)
+                  .map((l) => (
+                    <line key={`HY${l.v}`} data-gy={l.v} y1={l.px} y2={l.px} x1={grid.span.x0} x2={grid.span.x1} stroke="var(--grid-major)" shapeRendering="crispEdges" />
+                  ))}
+              </>
+            )}
           </svg>
 
           <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 block size-full" />
 
-          {/* Team code centred on its glyphs in cell A1, moving with the cell. Letters only, never a logo. */}
+          {/* Team code centred on its glyphs in the top-left 0 to 10 cell, moving and scaling with the grid.
+              Letters only, never a logo. */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute flex items-center justify-center"
-            style={{ left: colX(0), top: rowY(0), width: cellW * t.k, height: cellH * t.k }}
+            data-team-cell
+            className="pointer-events-none absolute top-0 left-0 flex origin-top-left items-center justify-center"
+            style={
+              teamCell
+                ? { width: teamCell.w, height: teamCell.h, transform: `translate(${teamCell.x * t.k + t.x}px, ${teamCell.y * t.k + t.y}px) scale(${t.k})` }
+                : { display: "none" }
+            }
           >
             <AnimatePresence>
               {team && (

@@ -5,7 +5,8 @@ Status: running
 | Checkpoint | Commit | Notes |
 |---|---|---|
 | 0 Plan and lab | 7b8f06e | |
-| 1 Data | this commit | 14,672 of 14,672 seasons matched |
+| 1 Data | dd9b838 | 14,672 of 14,672 seasons matched |
+| 2 Grid | this commit | At 1x major step 50 (minor 10, fully visible); at 8x major 5, minor 1 |
 
 ## Issues and fixes
 

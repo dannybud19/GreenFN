@@ -6,7 +6,8 @@
   --surface: #ffffff;
   --surface-2: #f4f4f1;
   --border: #e3e3de;
-  --grid: #efefeb;
+  --grid: #f0f0ec;
+  --grid-major: #e0e0da;
   --ink: #111111;
   --ink-inv: #ffffff;
   --muted: #6e6e6a; /* Figma #7A7A76 is 4.3:1 on white; darkened to pass WCAG AA (4.5:1) */
@@ -26,7 +27,8 @@
   --surface: #0b0b0b;
   --surface-2: #161614;
   --border: #232320;
-  --grid: #151513;
+  --grid: #1a1a18;
+  --grid-major: #2a2a27;
   --ink: #f2f2f0;
   --ink-inv: #000000;
   --muted: #8c8c88;
@@ -52,6 +54,7 @@
   --color-surface-2: var(--surface-2);
   --color-border: var(--border);
   --color-grid: var(--grid);
+  --color-grid-major: var(--grid-major);
   --color-ink: var(--ink);
   --color-ink-inv: var(--ink-inv);
   --color-muted: var(--muted);
