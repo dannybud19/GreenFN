@@ -139,6 +139,7 @@ Performance: never animate 14,672 DOM nodes. The canvas redraws per frame only d
 | 19 Nov 2026 | Tokens measured from `notes/design/ref-*.png` instead of the Figma MCP | The connected Figma account could not open the file (runbook fallback) |
 | 19 Nov 2026 | `map.json` team field is the season's team codes joined by "/"; a traded season counts for every team in it; `teams.json` adds `short`, `first`, `last`; `players.json` adds `region` | Basketball Reference codes traded seasons as 2TM to 5TM; comp region tags need every player's region without loading 10 files |
 | 19 Nov 2026 | Region 7 keeps the neutral name "Region 7" | Its top stats are assists, usage and shot volume, not "threes and assists" (section 4.1 rule) |
+| 19 Nov 2026 | "Region 7" renamed "Ball-dominant guards" ("Assists, usage, shot volume") via a fixed override in `export_web.py`, keyed by the cluster's top-3 stats | Danny's follow-up: a descriptive name that matches the cluster's stats |
 | 19 Nov 2026 | Light `muted` darkened from #7A7A76 to #6E6E6A | #7A7A76 is 4.3:1 on white, under WCAG AA |
 | 19 Nov 2026 | Why sentence names the stats ("Both match closely on ...") instead of levels ("used a lot of ...") | A positive attribution means alike on the stat, not that both are high |
 | 19 Nov 2026 | Data attribution moved from the footer to the About card | One page, no footer in the frames |

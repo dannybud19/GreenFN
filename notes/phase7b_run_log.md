@@ -27,6 +27,12 @@ Status: finished
 - **Why-similar sentence.** The frames say "Both used a lot of their team's possessions, took a lot of shots...". A positive attribution means the two careers are alike on a stat, not that both are high, so the 15 phrases name the stat instead ("Both match closely on how much of the offence ran through them, how often they shot and how often they got steals.").
 - **Attribution.** The old footer is gone (one page). The data attribution from `meta.json` now sits in the About card, with the note that the map and regions are a reading aid.
 
+## Follow-ups (19 Nov 2026)
+
+| Change | Commit | Notes |
+|---|---|---|
+| Vercel Root Directory set to `web` with the CLI (`vercel api` PATCH) | none (project setting) | Preview redeployed |
+
 ## Key numbers
 - Motion version / Next.js version: motion 14.14.0, Next.js 16.4.6, React 19.3.0, Playwright 1.65.1 (dev only)
 - Region check (k-means 9, random_state 0, n_init 10, on the map coordinates; top 3 mean within-season z-scores):
@@ -36,7 +42,7 @@ Status: finished
   - Region 4: ast_percent +1.30, tov_percent +0.93, stl_percent +0.85; PG; **Floor generals** kept
   - Region 5: x3p_ar +1.21, x3p_percent_shrunk +0.42, ft_percent_shrunk +0.17; SF; **Stretch wings** kept
   - Region 6: drb_percent +0.99, usg_percent +0.81, blk_percent +0.78; PF; **Scoring bigs** kept
-  - Region 7: ast_percent +1.54, usg_percent +1.30, fga_per_100_poss +1.17; PG; draft "Shooting point guards" did not match (no threes in the top 3), so the neutral name **Region 7** is used. Michael Jordan, Kobe Bryant and most of Jordan's comps sit here
+  - Region 7: ast_percent +1.54, usg_percent +1.30, fga_per_100_poss +1.17; PG; draft "Shooting point guards" did not match (no threes in the top 3), so the neutral name "Region 7" was used; follow-up: renamed **Ball-dominant guards** ("Assists, usage, shot volume") by a fixed override keyed on these three stats. Michael Jordan, Kobe Bryant and most of Jordan's comps sit here
   - Region 8: orb_percent +0.17, drb_percent +0.16, x2p_percent_shrunk +0.15; SF; **All-round forwards** kept (every mean z under 0.5)
   - Region 9: fga_per_100_poss +0.83, usg_percent +0.77, ft_percent_shrunk +0.37; SG; **Primary scorers** kept
 - Legends skipped: none (10 of 10 found). Closest matches: Jordan to Kobe Bryant, LeBron to Dwyane Wade, Kobe to Donovan Mitchell, Curry to Mark Price, Shaq to Tim Duncan, Duncan to Pau Gasol, Magic to Tyrese Haliburton, Bird to Stephen Curry, Jokić to Kevin Garnett, Garnett to Karl Malone
@@ -50,7 +56,7 @@ Status: finished
 
 ## Still different from the Figma frames
 - The Figma file itself could not be read; comparisons are against the reference renders only.
-- Real data, not the mock-up's: Jordan's closest match is Kobe Bryant (the frame shows Dwyane Wade), team lists count traded seasons (Hinrich 11, Deng 10), and Jordan's comps are tagged "Region 7" rather than "Primary scorers".
+- Real data, not the mock-up's: Jordan's closest match is Kobe Bryant (the frame shows Dwyane Wade), team lists count traded seasons (Hinrich 11, Deng 10), and Jordan's comps are tagged "Ball-dominant guards" rather than "Primary scorers".
 - The player panel header says "Clear ×" where the frames show "SCROLL ↓", so a selection can be cleared without the keyboard.
 - The why sentence wording (see above), and the "· differs" suffix comes from the About reference render.
 - The team dropdown uses the native select list when open (the closed state matches the frames).

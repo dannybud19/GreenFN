@@ -86,6 +86,13 @@ REGION_NAMES = [
     ("All-round forwards", None, "close to league average"),
 ]
 
+# Fixed names for clusters that matched no draft name (Danny, 19 Nov 2026). Keyed by the cluster's top 3 mean
+# within-season z-scores (as a set), not by cluster index, so the name can only land on the cluster it was chosen
+# for. The cluster with assists, usage and shot volume on top (mostly PGs) had no draft name and was "Region 7".
+REGION_OVERRIDES = {
+    frozenset({"ast_percent", "usg_percent", "fga_per_100_poss"}): ("Ball-dominant guards", "Assists, usage, shot volume"),
+}
+
 STAT_WORDS = {
     "fga_per_100_poss": "shot volume", "x3p_ar": "3PT rate", "f_tr": "free-throw rate", "ts_percent": "true shooting",
     "x3p_percent_shrunk": "3PT%", "x2p_percent_shrunk": "2PT%", "ft_percent_shrunk": "FT%", "usg_percent": "usage",
@@ -133,13 +140,17 @@ def regions(seasons: pd.DataFrame) -> tuple[np.ndarray, list[dict], list[str]]:
         n = assigned[r]
         name, _, desc = REGION_NAMES[n]
         kept = match[n, r] > 0
-        if not kept:
+        override = REGION_OVERRIDES.get(frozenset(stats[r]["top"])) if not kept else None
+        if override:
+            name, desc = override
+        elif not kept:
             name, desc = f"Region {r + 1}", ", ".join(STAT_WORDS[s] for s in stats[r]["top"])
         cx, cy = km.cluster_centers_[r]
         out.append({"name": name, "desc": desc, "x": round(float(cx), 3), "y": round(float(cy), 3)})
         top3 = ", ".join(f"{s} {stats[r]['z'][s]:+.2f}" for s in stats[r]["top"])
         checks.append(f"Region {r + 1}: {top3}; top position {stats[r]['pos']}; "
-                      + (f"name '{name}' kept" if kept else f"draft '{REGION_NAMES[n][0]}' did not match, neutral name"))
+                      + (f"name '{name}' kept" if kept else f"draft '{REGION_NAMES[n][0]}' did not match, "
+                         + (f"fixed name '{name}'" if override else "neutral name")))
     return labels, out, checks
 
 
