@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeGrid, LABEL, layoutLabels, majorStep, minorAlpha, niceStep } from "./grid";
+import { computeGrid, gridFrame, LABEL, layoutLabels, majorStep, minorAlpha, niceStep } from "./grid";
 
 // Roughly the app's 1x map: 723 x 338 px of dots inside an 840 x 593 plot.
 const box = { minX: 50, maxX: 773, minY: 128, maxY: 466 };
@@ -80,5 +80,13 @@ describe("map grid", () => {
     const lab = layoutLabels(g, 300, 1000);
     const xs = lab.across.map((l) => l.x);
     for (let i = 1; i < xs.length; i++) expect(xs[i] - xs[i - 1]).toBeGreaterThanOrEqual(3 * LABEL.charW + 6);
+  });
+
+  it("the frame is the whole plot right of and below the numbers, with 10s at 1x", () => {
+    const f = gridFrame(1180, 820);
+    expect(f).toEqual({ minX: LABEL.gapLeft + 3 * LABEL.charW + 2, minY: LABEL.gapTop + LABEL.h, maxX: 1180, maxY: 820 });
+    const g = computeGrid({ k: 1, x: 0, y: 0 }, f, 1180, 820);
+    expect(g.major).toBe(10);
+    expect(g.span).toEqual({ x0: f.minX, x1: 1180, y0: f.minY, y1: 820 });
   });
 });

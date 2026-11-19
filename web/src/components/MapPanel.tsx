@@ -569,6 +569,8 @@ export function MapPanel(props: Props) {
           data-zoom={t.k.toFixed(2)}
           data-tx={t.x.toFixed(2)}
           data-ty={t.y.toFixed(2)}
+          data-frame={gridBox ? [gridBox.minX, gridBox.minY, gridBox.maxX, gridBox.maxY].map((v) => v.toFixed(2)).join(",") : undefined}
+          data-dots={base ? [base.box.minX, base.box.minY, base.box.maxX, base.box.maxY].map((v) => v.toFixed(2)).join(",") : undefined}
         >
           <svg aria-hidden="true" className="absolute inset-0 size-full">
             {grid && (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyT, clampT, giveAt, IDENTITY, K_MAX, zoomAround } from "./map";
+import { applyT, clampT, fitInFrame, giveAt, IDENTITY, K_MAX, zoomAround } from "./map";
 
 const W = 800;
 const H = 600;
@@ -45,5 +45,31 @@ describe("map pan and zoom transform", () => {
   it("leaves a transform that is already in range unchanged", () => {
     const t = { k: 2, x: -300, y: -200 };
     expect(clampT(t, W, H)).toEqual(t);
+  });
+
+  it("with a grid frame, the frame keeps covering its 1x place, plus the give when zoomed", () => {
+    const frame = { minX: 28, minY: 20, maxX: W, maxY: H };
+    expect(clampT({ k: 1, x: 90, y: -40 }, W, H, frame)).toEqual({ k: 1, x: 0, y: 0 });
+    const far = clampT({ k: 4, x: 1e5, y: 1e5 }, W, H, frame);
+    expect(far.x).toBeCloseTo(28 * (1 - 4) + 0.25 * W);
+    expect(far.y).toBeCloseTo(20 * (1 - 4) + 0.25 * H);
+    const near = clampT({ k: 4, x: -1e5, y: -1e5 }, W, H, frame);
+    expect(near.x).toBeCloseTo(W * (1 - 4) - 0.25 * W);
+    expect(near.y).toBeCloseTo(H * (1 - 4) - 0.25 * H);
+  });
+});
+
+describe("fitting the dots into the grid frame", () => {
+  const pts = { n: 4, x: [0, 10, 0, 10], y: [0, 0, 4, 4] }; // 10 x 4 data units
+  it("keeps the real proportions, as large as fits with an 8 px margin, centred", () => {
+    const { bx, by, box } = fitInFrame(pts, { minX: 28, minY: 20, maxX: 828, maxY: 620 }, 8);
+    const w = box.maxX - box.minX;
+    const h = box.maxY - box.minY;
+    expect(w / h).toBeCloseTo(10 / 4, 6); // one scale for x and y
+    expect(w).toBeCloseTo(800 - 16); // width-limited: touches the margin on both sides
+    expect(box.minX).toBeCloseTo(36);
+    expect((box.minY + box.maxY) / 2).toBeCloseTo((20 + 620) / 2); // centred vertically
+    expect(by[0]).toBeCloseTo(box.maxY); // y up in data is down on screen
+    expect(bx[1]).toBeCloseTo(box.maxX);
   });
 });
