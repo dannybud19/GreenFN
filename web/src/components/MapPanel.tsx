@@ -1,18 +1,35 @@
 "use client";
 
-import { animate, AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { animate, AnimatePresence, motion, useReducedMotion, type AnimationPlaybackControls } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ColourSwitch } from "@/components/ColourSwitch";
 import { Key, type KeyExtra } from "@/components/Key";
 import { SearchBox } from "@/components/SearchBox";
 import { TeamSelect } from "@/components/TeamSelect";
-import { ZOOM_MAX, ZOOM_MIN, ZoomControl } from "@/components/ZoomControl";
+import { ZoomControl } from "@/components/ZoomControl";
 import type { PlayerRow, Region, Team } from "@/lib/data";
-import { fitBounds, legendEntries, palette, project, teamIndices, type ColourMode, type Points, type View } from "@/lib/map";
+import {
+  applyT,
+  basePositions,
+  clampT,
+  fitBounds,
+  IDENTITY,
+  K_MAX,
+  K_MIN,
+  legendEntries,
+  palette,
+  teamIndices,
+  zoomAround,
+  type ColourMode,
+  type Points,
+  type Transform,
+} from "@/lib/map";
 import type { Theme } from "@/lib/theme";
 
 const COLS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 const ROWS = [1, 2, 3, 4, 5, 6];
+const DRAG_THRESHOLD = 4;
+const BUTTON_STEP = 2;
 
 type Props = {
   pts: Points | null;
@@ -49,6 +66,18 @@ function buckets(pts: Points, mode: ColourMode): number[][] {
   return out;
 }
 
+const clampK = (k: number) => Math.min(K_MAX, Math.max(K_MIN, k));
+
+/** True if at least one dot is inside the w x h plot under transform t (stops at the first one found). */
+function anyInView(bx: Float32Array, by: Float32Array, t: Transform, w: number, h: number): boolean {
+  for (let i = 0; i < bx.length; i++) {
+    const x = bx[i] * t.k + t.x;
+    const y = by[i] * t.k + t.y;
+    if (x >= 0 && x <= w && y >= 0 && y <= h) return true;
+  }
+  return false;
+}
+
 /** The team code types in letter by letter (Doto); untyped letters keep their space so the code stays centred. */
 function TypedCode({ code, instant }: { code: string; instant: boolean }) {
   const [typed, setTyped] = useState(instant ? code.length : 0);
@@ -77,10 +106,15 @@ export function MapPanel(props: Props) {
   const plotRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
-  const [view, setView] = useState<View | null>(null);
-  const viewRef = useRef<View | null>(null);
-  const [hover, setHover] = useState<{ x: number; y: number; i: number } | null>(null);
-  const [zoomTarget, setZoomTarget] = useState(1);
+  const [hover, setHover] = useState<number | null>(null);
+  const [dragging, setDragging] = useState(false);
+
+  // Pan and zoom. The live value is in a ref (read by the canvas each frame); React state follows once per frame
+  // so the grid, labels, team code and SVG overlays move with the dots.
+  const tRef = useRef<Transform>(IDENTITY);
+  const [t, setT] = useState<Transform>(IDENTITY);
+  const stateFrame = useRef(0);
+  const zoomAnim = useRef<AnimationPlaybackControls | null>(null);
 
   // Animated scalars for the canvas, kept in refs and drawn on the next frame.
   const anim = useRef({ appear: 0, modeT: 1, prevMode: mode as ColourMode, dimT: 0, teamT: 0 });
@@ -97,18 +131,7 @@ export function MapPanel(props: Props) {
   }, []);
 
   const fit = useMemo(() => (pts && size.w > 0 ? fitBounds(pts, size.w, size.h) : null), [pts, size]);
-
-  // Start (and reset) the view at the fitted centre.
-  useEffect(() => {
-    if (!fit) return;
-    const v = viewRef.current ? { ...viewRef.current } : { cx: fit.cx, cy: fit.cy, zoom: 1 };
-    if (v.zoom === 1) {
-      v.cx = fit.cx;
-      v.cy = fit.cy;
-    }
-    viewRef.current = v;
-    setView(v);
-  }, [fit]);
+  const base = useMemo(() => (pts && fit ? basePositions(pts, fit, size.w, size.h) : null), [pts, fit, size]);
 
   const allBuckets = useMemo(
     () => (pts ? { decade: buckets(pts, "decade"), position: buckets(pts, "position"), region: buckets(pts, "region") } : null),
@@ -124,8 +147,7 @@ export function MapPanel(props: Props) {
   const draw = useCallback(() => {
     frame.current = 0;
     const canvas = canvasRef.current;
-    const v = viewRef.current;
-    if (!canvas || !pts || !fit || !v || !allBuckets || size.w === 0) return;
+    if (!canvas || !base || !allBuckets || size.w === 0) return;
     const dpr = window.devicePixelRatio || 1;
     if (canvas.width !== size.w * dpr || canvas.height !== size.h * dpr) {
       canvas.width = size.w * dpr;
@@ -135,42 +157,42 @@ export function MapPanel(props: Props) {
     if (!ctx) return;
     const c = (colours.current ??= readColours());
     const a = anim.current;
+    const { k, x: tx, y: ty } = tRef.current;
+    const { bx, by } = base;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, size.w, size.h);
-    const s = fit.scale * v.zoom;
-    const ox = size.w / 2 - v.cx * s;
-    const oy = size.h / 2 + v.cy * s;
-    const d = 2.3 * Math.min(Math.sqrt(v.zoom), 1.8);
-    const base = (c.alpha + (c.dim - c.alpha) * a.dimT) * a.appear;
+    const d = 2.3 * Math.min(Math.sqrt(k), 2.2);
+    const half = d / 2;
+    const alpha = (c.alpha + (c.dim - c.alpha) * a.dimT) * a.appear;
 
-    const pass = (m: ColourMode, alpha: number) => {
-      if (alpha <= 0.002) return;
+    const pass = (m: ColourMode, al: number) => {
+      if (al <= 0.002) return;
       const cols = palette(m);
-      ctx.globalAlpha = alpha;
-      allBuckets[m].forEach((idx, k) => {
+      ctx.globalAlpha = al;
+      allBuckets[m].forEach((idx, j) => {
         if (!idx) return;
-        ctx.fillStyle = cols[k % cols.length];
-        for (const i of idx) ctx.fillRect(ox + pts.x[i] * s - d / 2, oy - pts.y[i] * s - d / 2, d, d);
+        ctx.fillStyle = cols[j % cols.length];
+        for (const i of idx) ctx.fillRect(bx[i] * k + tx - half, by[i] * k + ty - half, d, d);
       });
     };
-    if (a.modeT < 1) pass(a.prevMode, base * (1 - a.modeT));
-    pass(mode, base * a.modeT);
+    if (a.modeT < 1) pass(a.prevMode, alpha * (1 - a.modeT));
+    pass(mode, alpha * a.modeT);
 
     if (a.teamT > 0.002) {
       ctx.globalAlpha = a.teamT * a.appear;
       ctx.fillStyle = c.ink;
-      const r = 1.9 * Math.min(Math.sqrt(v.zoom), 1.6);
+      const r = 1.9 * Math.min(Math.sqrt(k), 2);
       ctx.beginPath();
       for (const i of lastTeamIdx.current) {
-        const px = ox + pts.x[i] * s;
-        const py = oy - pts.y[i] * s;
+        const px = bx[i] * k + tx;
+        const py = by[i] * k + ty;
         ctx.moveTo(px + r, py);
         ctx.arc(px, py, r, 0, Math.PI * 2);
       }
       ctx.fill();
     }
     ctx.globalAlpha = 1;
-  }, [pts, fit, size, allBuckets, mode]);
+  }, [base, size, allBuckets, mode]);
 
   const requestDraw = useCallback(() => {
     if (!frame.current) frame.current = requestAnimationFrame(draw);
@@ -178,7 +200,106 @@ export function MapPanel(props: Props) {
 
   useEffect(() => {
     requestDraw();
-  }, [requestDraw, view]);
+  }, [requestDraw]);
+
+  /**
+   * Set the transform (clamped). A move that would leave no dot at all in view is refused, so the dots can never
+   * be dragged or zoomed fully out of sight. The canvas redraws on the next frame; React state follows once per frame.
+   */
+  const commit = useCallback(
+    (next: Transform) => {
+      if (!base) return;
+      const c = clampT(next, base.box, size.w, size.h);
+      if (c.k > 1 && !anyInView(base.bx, base.by, c, size.w, size.h)) return;
+      tRef.current = c;
+      requestDraw();
+      if (!stateFrame.current)
+        stateFrame.current = requestAnimationFrame(() => {
+          stateFrame.current = 0;
+          setT(tRef.current);
+        });
+    },
+    [base, size, requestDraw],
+  );
+
+  // A new plot size or data set starts again at 1x, centred.
+  useEffect(() => {
+    tRef.current = IDENTITY;
+    const id = requestAnimationFrame(() => setT(IDENTITY));
+    return () => cancelAnimationFrame(id);
+  }, [base]);
+
+  /** Eased zoom (buttons, double-click, reset). With an anchor the point under it stays put; jumps under reduced motion. */
+  const animateTo = useCallback(
+    (target: Transform, anchor?: [number, number]) => {
+      zoomAnim.current?.stop();
+      if (reduce) {
+        commit(target);
+        return;
+      }
+      const from = tRef.current;
+      zoomAnim.current = animate(0, 1, {
+        duration: 0.32,
+        ease: [0.2, 0.7, 0.2, 1],
+        onUpdate: (s) => {
+          const k = from.k * Math.pow(target.k / from.k, s);
+          if (anchor) commit(zoomAround(from, k, anchor[0], anchor[1]));
+          else commit({ k, x: from.x + (target.x - from.x) * s, y: from.y + (target.y - from.y) * s });
+        },
+      });
+    },
+    [commit, reduce],
+  );
+
+  const zoomBy = useCallback(
+    (f: number, at?: [number, number]) => {
+      if (!base) return;
+      const p: [number, number] = at ?? [size.w / 2, size.h / 2];
+      const k2 = clampK(tRef.current.k * f);
+      animateTo(clampT(zoomAround(tRef.current, k2, p[0], p[1]), base.box, size.w, size.h), p);
+    },
+    [animateTo, base, size],
+  );
+  const reset = useCallback(() => animateTo(IDENTITY), [animateTo]);
+
+  // Wheel and trackpad pinch (ctrlKey wheel on macOS) zoom around the pointer and never scroll the page.
+  // Safari's trackpad pinch arrives as gesture events instead.
+  useEffect(() => {
+    const el = plotRef.current;
+    if (!el || !base) return;
+    const local = (e: { clientX: number; clientY: number }) => {
+      const r = el.getBoundingClientRect();
+      return [e.clientX - r.left, e.clientY - r.top] as const;
+    };
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      zoomAnim.current?.stop();
+      const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * size.h : e.deltaY;
+      const f = Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0018));
+      const [px, py] = local(e);
+      commit(zoomAround(tRef.current, clampK(tRef.current.k * f), px, py));
+    };
+    let gestureStart: Transform | null = null;
+    const onGestureStart = (e: Event) => {
+      e.preventDefault();
+      gestureStart = tRef.current;
+    };
+    const onGestureChange = (e: Event) => {
+      e.preventDefault();
+      const g = e as Event & { scale: number; clientX: number; clientY: number };
+      if (!gestureStart) return;
+      const [px, py] = local(g);
+      commit(zoomAround(gestureStart, clampK(gestureStart.k * g.scale), px, py));
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("gesturestart", onGestureStart);
+    el.addEventListener("gesturechange", onGestureChange);
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("gesturestart", onGestureStart);
+      el.removeEventListener("gesturechange", onGestureChange);
+    };
+  }, [base, size, commit]);
 
   const tween = useCallback(
     (key: "appear" | "modeT" | "dimT" | "teamT", to: number, seconds: number) =>
@@ -234,51 +355,18 @@ export function MapPanel(props: Props) {
     return () => c.stop();
   }, [theme, requestDraw, reduce]);
 
-  // Zoom: ease the canvas to the new scale (300 ms). Zooming in centres on the selected player if there is one.
-  const zoomTo = useCallback(
-    (z: number) => {
-      const v0 = viewRef.current;
-      if (!v0 || !fit || !pts) return;
-      let tx = v0.cx;
-      let ty = v0.cy;
-      if (z === 1) {
-        tx = fit.cx;
-        ty = fit.cy;
-      } else if (selected && pts.start.has(selected.id) && v0.zoom === 1) {
-        const [a, b] = pts.start.get(selected.id)!;
-        tx = 0;
-        ty = 0;
-        for (let i = a; i < b; i++) {
-          tx += pts.x[i] / (b - a);
-          ty += pts.y[i] / (b - a);
-        }
-      }
-      const from = { ...v0 };
-      setZoomTarget(z);
-      animate(0, 1, {
-        duration: dur(0.3),
-        ease: "easeOut",
-        onUpdate: (t) => {
-          const v = { cx: from.cx + (tx - from.cx) * t, cy: from.cy + (ty - from.cy) * t, zoom: from.zoom + (z - from.zoom) * t };
-          viewRef.current = v;
-          setView(v);
-        },
-      });
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [fit, pts, selected, reduce],
-  );
+  // Pointers: one pointer drags (after 4 px), two pointers pinch. A press that never moves 4 px is a click and
+  // selects the season under it.
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const gesture = useRef<{ x: number; y: number; moved: boolean; pinch: { d: number; mx: number; my: number; t: Transform } | null } | null>(null);
 
-  // Pointer: hover shows the season under the cursor; click selects that player; drag pans when zoomed in.
-  const drag = useRef<{ x: number; y: number; cx: number; cy: number; moved: boolean } | null>(null);
   const nearest = (mx: number, my: number): number => {
-    const v = viewRef.current;
-    if (!pts || !fit || !v) return -1;
+    if (!base) return -1;
+    const { k, x: tx, y: ty } = tRef.current;
     let best = -1;
     let bestD = 64;
-    for (let i = 0; i < pts.n; i++) {
-      const [px, py] = project(pts.x[i], pts.y[i], fit, v, size.w, size.h);
-      const dd = (px - mx) ** 2 + (py - my) ** 2;
+    for (let i = 0; i < base.bx.length; i++) {
+      const dd = (base.bx[i] * k + tx - mx) ** 2 + (base.by[i] * k + ty - my) ** 2;
       if (dd < bestD) {
         bestD = dd;
         best = i;
@@ -286,69 +374,93 @@ export function MapPanel(props: Props) {
     }
     return best;
   };
-  const local = (e: React.PointerEvent) => {
+  const local = (e: React.PointerEvent | React.MouseEvent) => {
     const r = e.currentTarget.getBoundingClientRect();
     return [e.clientX - r.left, e.clientY - r.top] as const;
   };
+  const pinchOf = () => {
+    const [a, b] = [...pointers.current.values()];
+    return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, t: tRef.current };
+  };
+
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    const v = viewRef.current;
-    if (!v) return;
+    if (e.button !== 0 && e.pointerType === "mouse") return;
     const [x, y] = local(e);
-    drag.current = { x, y, cx: v.cx, cy: v.cy, moved: false };
     e.currentTarget.setPointerCapture(e.pointerId);
+    zoomAnim.current?.stop();
+    pointers.current.set(e.pointerId, { x, y });
+    if (pointers.current.size === 1) gesture.current = { x, y, moved: false, pinch: null };
+    else if (pointers.current.size === 2 && gesture.current) {
+      gesture.current.moved = true;
+      gesture.current.pinch = pinchOf();
+    }
   }
   function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
     const [x, y] = local(e);
-    const g = drag.current;
-    if (g && fit && viewRef.current) {
-      const dx = x - g.x;
-      const dy = y - g.y;
-      if (Math.abs(dx) + Math.abs(dy) > 3) g.moved = true;
-      if (g.moved && viewRef.current.zoom > 1) {
-        const s = fit.scale * viewRef.current.zoom;
-        const v = { ...viewRef.current, cx: g.cx - dx / s, cy: g.cy + dy / s };
-        viewRef.current = v;
-        setView(v);
-        setHover(null);
-        return;
+    const g = gesture.current;
+    const prev = pointers.current.get(e.pointerId);
+    if (!g || !prev) {
+      if (e.pointerType === "mouse") {
+        const i = nearest(x, y);
+        setHover(i < 0 ? null : i);
       }
+      return;
     }
-    const i = nearest(x, y);
-    setHover(i < 0 ? null : { x, y, i });
+    pointers.current.set(e.pointerId, { x, y });
+    if (g.pinch && pointers.current.size >= 2) {
+      const now = pinchOf();
+      const k2 = clampK(g.pinch.t.k * (now.d / g.pinch.d));
+      const z = zoomAround(g.pinch.t, k2, g.pinch.mx, g.pinch.my);
+      commit({ k: z.k, x: z.x + now.mx - g.pinch.mx, y: z.y + now.my - g.pinch.my });
+      return;
+    }
+    if (!g.moved && Math.hypot(x - g.x, y - g.y) >= DRAG_THRESHOLD) {
+      g.moved = true;
+      setDragging(true);
+      setHover(null);
+    }
+    if (g.moved) commit({ ...tRef.current, x: tRef.current.x + x - prev.x, y: tRef.current.y + y - prev.y });
   }
   function onPointerUp(e: React.PointerEvent<HTMLDivElement>) {
-    const g = drag.current;
-    drag.current = null;
-    if (g && !g.moved && pts) {
+    const g = gesture.current;
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size === 1 && g) {
+      // A pinch ended with one finger still down: carry on as a drag from where that finger is.
+      const [rest] = [...pointers.current.values()];
+      gesture.current = { x: rest.x, y: rest.y, moved: true, pinch: null };
+      return;
+    }
+    if (pointers.current.size > 0) return;
+    gesture.current = null;
+    setDragging(false);
+    if (g && !g.moved && pts && e.type === "pointerup") {
       const [x, y] = local(e);
       const i = nearest(x, y);
       if (i >= 0) props.onSelect(pts.player[i]);
     }
   }
+  function onDoubleClick(e: React.MouseEvent<HTMLDivElement>) {
+    const [x, y] = local(e);
+    zoomBy(BUTTON_STEP, [x, y]);
+  }
   function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
-    const v = viewRef.current;
-    if (!v || !fit) return;
-    const step = 40 / (fit.scale * v.zoom);
-    const moves: Record<string, [number, number]> = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] };
-    if (moves[e.key] && v.zoom > 1) {
+    const moves: Record<string, [number, number]> = { ArrowLeft: [40, 0], ArrowRight: [-40, 0], ArrowUp: [0, 40], ArrowDown: [0, -40] };
+    if (moves[e.key]) {
       e.preventDefault();
-      const nv = { ...v, cx: v.cx + moves[e.key][0], cy: v.cy + moves[e.key][1] };
-      viewRef.current = nv;
-      setView(nv);
-    } else if (e.key === "+" || e.key === "=") {
-      zoomTo(Math.min(ZOOM_MAX, v.zoom + 0.5));
-    } else if (e.key === "-") {
-      zoomTo(Math.max(ZOOM_MIN, v.zoom - 0.5));
-    }
+      commit({ ...tRef.current, x: tRef.current.x + moves[e.key][0], y: tRef.current.y + moves[e.key][1] });
+    } else if (e.key === "+" || e.key === "=") zoomBy(BUTTON_STEP);
+    else if (e.key === "-" || e.key === "_") zoomBy(1 / BUTTON_STEP);
+    else if (e.key === "0") reset();
   }
 
-  // SVG layer: the selected player's seasons (red) and the comparing player's (grey). At most ~40 nodes.
+  // Screen positions through the current transform.
+  const at = (i: number): [number, number] => (base ? applyT(t, base.bx[i], base.by[i]) : [0, 0]);
   const seasonsOf = (p: PlayerRow | null) => {
-    if (!p || !pts || !fit || !view || !pts.start.has(p.id)) return [];
+    if (!p || !pts || !base || !pts.start.has(p.id)) return [];
     const [a, b] = pts.start.get(p.id)!;
     const out: { season: number; px: number; py: number }[] = [];
     for (let i = a; i < b; i++) {
-      const [px, py] = project(pts.x[i], pts.y[i], fit, view, size.w, size.h);
+      const [px, py] = at(i);
       out.push({ season: pts.season[i], px, py });
     }
     return out.sort((m, n) => m.season - n.season);
@@ -358,20 +470,24 @@ export function MapPanel(props: Props) {
   const anchor = own.length ? own.reduce((m, p) => (p.py < m.py ? p : m)) : null;
   const tagW = selected ? selected.name.length * 7.2 + 22 : 0;
   const tagLeft = anchor ? (anchor.px + 64 + tagW > size.w ? anchor.px - 64 - tagW : anchor.px + 64) : 0;
-  const tagTop = anchor ? Math.max(anchor.py - 46, 4) : 0;
-
+  const tagTop = anchor ? anchor.py - 46 : 0;
 
   const extras: KeyExtra[] = [];
   if (team) extras.push({ label: `${team.short} season`, colour: "var(--ink)" });
   if (selected) extras.push({ label: "Selected", colour: "var(--red)" });
   if (selected && comparing && comparing.id !== selected.id) extras.push({ label: "Comparing", colour: "var(--comparing)" });
 
-  const hoverPlayer = hover && pts ? byId.get(pts.player[hover.i]) : null;
+  const hoverPlayer = hover !== null && pts ? byId.get(pts.player[hover]) : null;
+  const hoverAt = hover !== null ? at(hover) : null;
+
+  // The grid moves and scales with the dots: lines at the transformed cell edges, labels at transformed centres.
   const cellW = size.w / 8;
   const cellH = size.h / 6;
+  const colX = (i: number) => i * cellW * t.k + t.x;
+  const rowY = (i: number) => i * cellH * t.k + t.y;
 
   return (
-    <section className="card relative flex min-h-0 flex-col p-4 md:h-full md:p-5" aria-label="Map of every NBA season since 1980">
+    <section className="card relative flex min-h-0 flex-col p-4 md:h-full md:p-5" aria-label="Map of every NBA season since 1980" data-box="map">
       <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-[minmax(0,358px)_minmax(0,170px)_1fr] xl:gap-x-7">
         <div className="md:col-span-2 xl:col-span-1">
           <label htmlFor="player-search" className="label block" onClick={() => props.searchRef.current?.focus()}>
@@ -400,20 +516,26 @@ export function MapPanel(props: Props) {
       </div>
 
       <div className="relative mt-11 mb-5 h-[300px] pl-5 md:h-auto md:min-h-[260px] md:flex-1 xl:mr-[19px] xl:ml-[1px]">
-        {/* Column letters and row numbers sit outside the plot. */}
+        {/* Column letters and row numbers follow their columns and rows; off-screen ones are hidden. */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 left-5">
-          {COLS.map((c, i) => (
-            <span key={c} className="absolute -top-[17px] -translate-x-1/2 text-[10px] text-axis" style={{ left: `${(i + 0.5) * 12.5}%` }}>
-              {c}
-            </span>
-          ))}
+          {COLS.map((c, i) => {
+            const x = colX(i + 0.5);
+            return x < 0 || x > size.w ? null : (
+              <span key={c} className="absolute -top-[17px] -translate-x-1/2 text-[10px] text-axis" style={{ left: x }}>
+                {c}
+              </span>
+            );
+          })}
         </div>
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-5">
-          {ROWS.map((r, i) => (
-            <span key={r} className="absolute left-0 -translate-y-1/2 text-[10px] text-axis" style={{ top: `${((i + 0.5) / 6) * 100}%` }}>
-              {r}
-            </span>
-          ))}
+          {ROWS.map((r, i) => {
+            const y = rowY(i + 0.5);
+            return y < 0 || y > size.h ? null : (
+              <span key={r} className="absolute left-0 -translate-y-1/2 text-[10px] text-axis" style={{ top: y }}>
+                {r}
+              </span>
+            );
+          })}
         </div>
 
         <div
@@ -421,29 +543,36 @@ export function MapPanel(props: Props) {
           tabIndex={0}
           role="application"
           aria-roledescription="map"
-          aria-label="Every NBA season since 1980 as a dot. Click a dot to select that player. Plus and minus zoom; arrow keys pan when zoomed in."
-          className={`absolute inset-y-0 right-0 left-5 overflow-hidden outline-offset-4 ${view && view.zoom > 1 ? "cursor-grab active:cursor-grabbing" : hover ? "cursor-pointer" : ""}`}
+          aria-label="Every NBA season since 1980 as a dot. Click a dot to select that player. Drag to move; scroll, pinch or double-click to zoom. Keyboard: arrow keys move, plus and minus zoom, 0 resets."
+          className={`absolute inset-y-0 right-0 left-5 touch-none overflow-hidden overscroll-contain outline-offset-4 select-none ${
+            dragging ? "cursor-grabbing" : hover !== null ? "cursor-pointer" : "cursor-grab"
+          }`}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
           onPointerLeave={() => setHover(null)}
+          onDoubleClick={onDoubleClick}
           onKeyDown={onKeyDown}
+          data-zoom={t.k.toFixed(2)}
         >
-          <svg aria-hidden="true" className="absolute inset-0 size-full" preserveAspectRatio="none">
-            {COLS.map((_, i) => (
-              <line key={`v${i}`} x1={i * cellW + 0.5} x2={i * cellW + 0.5} y1={0} y2={size.h} stroke="var(--grid)" />
+          <svg aria-hidden="true" className="absolute inset-0 size-full">
+            {Array.from({ length: 9 }, (_, i) => (
+              <line key={`v${i}`} x1={colX(i)} x2={colX(i)} y1={rowY(0)} y2={rowY(6)} stroke="var(--grid)" shapeRendering="crispEdges" />
             ))}
-            <line x1={size.w - 0.5} x2={size.w - 0.5} y1={0} y2={size.h} stroke="var(--grid)" />
-            {ROWS.map((_, i) => (
-              <line key={`h${i}`} y1={i * cellH + 0.5} y2={i * cellH + 0.5} x1={0} x2={size.w} stroke="var(--grid)" />
+            {Array.from({ length: 7 }, (_, i) => (
+              <line key={`h${i}`} y1={rowY(i)} y2={rowY(i)} x1={colX(0)} x2={colX(8)} stroke="var(--grid)" shapeRendering="crispEdges" />
             ))}
-            <line y1={size.h - 0.5} y2={size.h - 0.5} x1={0} x2={size.w} stroke="var(--grid)" />
           </svg>
 
           <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 block size-full" />
 
-          {/* Team code centred on its glyphs in cell A1. Letters only, never a logo. */}
-          <div aria-hidden="true" className="pointer-events-none absolute top-0 left-0 flex items-center justify-center" style={{ width: cellW, height: cellH }}>
+          {/* Team code centred on its glyphs in cell A1, moving with the cell. Letters only, never a logo. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute flex items-center justify-center"
+            style={{ left: colX(0), top: rowY(0), width: cellW * t.k, height: cellH * t.k }}
+          >
             <AnimatePresence>
               {team && (
                 <motion.span
@@ -521,6 +650,7 @@ export function MapPanel(props: Props) {
                 transition={{ delay: 0.2, duration: 0.25, ease: "easeOut" }}
                 className="pointer-events-none absolute rounded-full bg-ink px-[10px] text-[11px] leading-[22px] font-semibold tracking-[0.04em] whitespace-nowrap text-ink-inv uppercase"
                 style={{ left: tagLeft, top: tagTop }}
+                data-name-tag
               >
                 {selected.name}
               </motion.div>
@@ -528,16 +658,16 @@ export function MapPanel(props: Props) {
           </AnimatePresence>
 
           <AnimatePresence>
-            {hover && hoverPlayer && (
+            {hoverAt && hoverPlayer && !dragging && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.1 }}
                 className="pointer-events-none absolute z-10 rounded-full border border-border bg-surface px-2.5 text-[11px] leading-[22px] whitespace-nowrap"
-                style={{ left: Math.min(hover.x + 12, size.w - 190), top: Math.max(hover.y - 30, 2) }}
+                style={{ left: Math.min(hoverAt[0] + 10, size.w - 190), top: Math.max(hoverAt[1] - 30, 2) }}
               >
-                {hoverPlayer.name} · {pts!.season[hover.i]}
+                {hoverPlayer.name} · {pts!.season[hover!]}
               </motion.div>
             )}
           </AnimatePresence>
@@ -556,7 +686,7 @@ export function MapPanel(props: Props) {
           <Key entries={legendEntries(mode, props.regions)} extras={extras} />
         </div>
         <div className="absolute right-0 bottom-0" data-box="zoom">
-          <ZoomControl zoom={zoomTarget} onZoom={zoomTo} />
+          <ZoomControl zoom={t.k} onIn={() => zoomBy(BUTTON_STEP)} onOut={() => zoomBy(1 / BUTTON_STEP)} onReset={reset} />
         </div>
       </div>
     </section>
