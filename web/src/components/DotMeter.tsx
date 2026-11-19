@@ -76,7 +76,7 @@ export function DotRow({ name, value, max, delay = 0 }: RowProps) {
   const differs = value < 0;
   const n = filledDots(value, max, 16);
   return (
-    <div className="flex h-[39px] items-center justify-between gap-3">
+    <div className="flex h-[39px] snap-start items-center justify-between gap-3">
       <span className={`min-w-0 truncate whitespace-nowrap ${differs ? "text-muted" : "text-ink"}`}>
         {name}
         {differs && <span className="text-muted"> · differs</span>}

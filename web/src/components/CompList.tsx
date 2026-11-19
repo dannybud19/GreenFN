@@ -11,6 +11,7 @@ type WhyProps = { comp: PlayerRow; values: number[] | null; labels: string[]; fe
 /** WHY THEY MATCH: one plain sentence, then the 15 stats as dot rows in their own scroll area (4 visible). */
 export function WhyCard({ comp, values, labels, features, onSelect }: WhyProps) {
   const [atEnd, setAtEnd] = useState(false);
+  const [atTop, setAtTop] = useState(true);
   const goto = (
     <button
       type="button"
@@ -35,15 +36,22 @@ export function WhyCard({ comp, values, labels, features, onSelect }: WhyProps) 
     <div className="rounded-xl border-[1.5px] border-ink p-4 pb-3">
       <p className="label">Why they match</p>
       <p className="mt-2 text-[13px] leading-5">{whySentence(values, features)}</p>
+      {/* The rows scroll in their own box under its own top border, never under the sentence. Rows snap to the
+          top edge so the first visible row is always whole; a short fade shows there is more above or below. */}
+      <div className="mt-3 border-t border-border pt-1">
       <div
         data-why-scroll
         tabIndex={0}
         aria-label="All 15 stats, scroll for more"
         onScroll={(e) => {
           const el = e.currentTarget;
+          setAtTop(el.scrollTop <= 1);
           setAtEnd(el.scrollTop + el.clientHeight >= el.scrollHeight - 4);
         }}
-        className="scroll-thin mt-3 h-[156px] overflow-y-auto border-t border-border pr-2"
+        style={{
+          maskImage: `linear-gradient(to bottom, ${atTop ? "#000" : "transparent"} 0, #000 10px, #000 calc(100% - 10px), ${atEnd ? "#000" : "transparent"} 100%)`,
+        }}
+        className="scroll-thin h-[156px] snap-y snap-mandatory overflow-y-auto overscroll-contain pr-2"
       >
         <div aria-hidden="true">
           {order.map((k, i) => (
@@ -69,6 +77,7 @@ export function WhyCard({ comp, values, labels, features, onSelect }: WhyProps) 
             ))}
           </tbody>
         </table>
+      </div>
       </div>
       <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
         <span className="label flex items-center gap-3">
