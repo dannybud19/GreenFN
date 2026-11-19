@@ -10,9 +10,8 @@ import { ZoomControl } from "@/components/ZoomControl";
 import type { PlayerRow, Region, Team } from "@/lib/data";
 import {
   applyT,
-  basePositions,
   clampT,
-  fitBounds,
+  fitInFrame,
   IDENTITY,
   K_MAX,
   K_MIN,
@@ -24,7 +23,7 @@ import {
   type Points,
   type Transform,
 } from "@/lib/map";
-import { computeGrid, layoutLabels } from "@/lib/grid";
+import { computeGrid, gridFrame, layoutLabels } from "@/lib/grid";
 import { fitTransform } from "@/lib/playback";
 import type { Theme } from "@/lib/theme";
 
@@ -126,8 +125,10 @@ export function MapPanel(props: Props) {
     return () => ro.disconnect();
   }, []);
 
-  const fit = useMemo(() => (pts && size.w > 0 ? fitBounds(pts, size.w, size.h) : null), [pts, size]);
-  const base = useMemo(() => (pts && fit ? basePositions(pts, fit, size.w, size.h) : null), [pts, fit, size]);
+  // The grid's 0 to 100 frame is the whole map area at 1x; the dots are fitted inside it at their real
+  // proportions (one scale for x and y), 8 px in, centred.
+  const gridBox = useMemo(() => (size.w > 0 ? gridFrame(size.w, size.h) : null), [size]);
+  const base = useMemo(() => (pts && gridBox ? fitInFrame(pts, gridBox, 8) : null), [pts, gridBox]);
 
   const allBuckets = useMemo(
     () => (pts ? { decade: buckets(pts, "decade"), position: buckets(pts, "position"), region: buckets(pts, "region") } : null),
@@ -218,7 +219,7 @@ export function MapPanel(props: Props) {
   const commit = useCallback(
     (next: Transform) => {
       if (!base) return;
-      tRef.current = clampT(next, size.w, size.h);
+      tRef.current = clampT(next, size.w, size.h, gridBox ?? undefined);
       requestDraw();
       if (!stateFrame.current)
         stateFrame.current = requestAnimationFrame(() => {
@@ -226,7 +227,7 @@ export function MapPanel(props: Props) {
           setT(tRef.current);
         });
     },
-    [base, size, requestDraw],
+    [base, size, gridBox, requestDraw],
   );
 
   // A resize (or new data) keeps the current zoom, re-clamped to the new plot size.
@@ -261,9 +262,9 @@ export function MapPanel(props: Props) {
       if (!base) return;
       const p: [number, number] = at ?? [size.w / 2, size.h / 2];
       const k2 = clampK(tRef.current.k * f);
-      animateTo(clampT(zoomAround(tRef.current, k2, p[0], p[1]), size.w, size.h), p);
+      animateTo(clampT(zoomAround(tRef.current, k2, p[0], p[1]), size.w, size.h, gridBox ?? undefined), p);
     },
-    [animateTo, base, size],
+    [animateTo, base, size, gridBox],
   );
   const reset = useCallback(() => animateTo(IDENTITY), [animateTo]);
 
@@ -281,8 +282,8 @@ export function MapPanel(props: Props) {
     const [a, b] = pts.start.get(selected.id)!;
     const xs = Array.from(base.bx.subarray(a, b));
     const ys = Array.from(base.by.subarray(a, b));
-    animateTo(fitTransform(xs, ys, size.w, size.h), undefined, 0.6);
-  }, [viewCmd, base, pts, selected, size, animateTo]);
+    animateTo(fitTransform(xs, ys, size.w, size.h, gridBox ?? undefined), undefined, 0.6);
+  }, [viewCmd, base, pts, selected, size, gridBox, animateTo]);
 
   // Wheel and trackpad pinch (ctrlKey wheel on macOS) zoom around the pointer and never scroll the page.
   // Safari's trackpad pinch arrives as gesture events instead.
@@ -512,12 +513,10 @@ export function MapPanel(props: Props) {
 
   // The grid: 0 to 100 across the dots' bounding box, origin top-left, adaptive major and minor lines. Lines and
   // labels come from the same transform, so they move and scale together with the dots.
-  const grid = base && size.w > 0 ? computeGrid(t, base.box, size.w, size.h) : null;
+  const grid = gridBox ? computeGrid(t, gridBox, size.w, size.h) : null;
   const labels = grid ? layoutLabels(grid, size.w, size.h) : null;
   // The team code's cell: 0 to 10 by 0 to 10 at 1x (base coordinates), scaled with the map.
-  const teamCell = base
-    ? { x: base.box.minX, y: base.box.minY, w: (base.box.maxX - base.box.minX) / 10, h: (base.box.maxY - base.box.minY) / 10 }
-    : null;
+  const teamCell = gridBox ? { x: gridBox.minX, y: gridBox.minY, w: (gridBox.maxX - gridBox.minX) / 10, h: (gridBox.maxY - gridBox.minY) / 10 } : null;
 
   return (
     <section className="card relative flex min-h-0 flex-col p-4 md:h-full md:p-5" aria-label="Map of every NBA season since 1980" data-box="map">
@@ -548,7 +547,9 @@ export function MapPanel(props: Props) {
         </div>
       </div>
 
-      <div className="relative mt-5 mb-5 h-[300px] md:h-auto md:min-h-[260px] md:flex-1">
+      {/* The map area: 16 px from the card's left, right and bottom edges (the card has 20 px padding). The KEY and
+          zoom row sits on top of it at the bottom. */}
+      <div className="relative -mx-1 mt-4 -mb-1 h-[360px] md:h-auto md:min-h-[300px] md:flex-1" data-box="map-area">
         <div
           ref={plotRef}
           tabIndex={0}
@@ -568,6 +569,8 @@ export function MapPanel(props: Props) {
           data-zoom={t.k.toFixed(2)}
           data-tx={t.x.toFixed(2)}
           data-ty={t.y.toFixed(2)}
+          data-frame={gridBox ? [gridBox.minX, gridBox.minY, gridBox.maxX, gridBox.maxY].map((v) => v.toFixed(2)).join(",") : undefined}
+          data-dots={base ? [base.box.minX, base.box.minY, base.box.maxX, base.box.maxY].map((v) => v.toFixed(2)).join(",") : undefined}
         >
           <svg aria-hidden="true" className="absolute inset-0 size-full">
             {grid && (
@@ -602,28 +605,6 @@ export function MapPanel(props: Props) {
 
           <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 block size-full" />
 
-          {/* Grid numbers, laid out from the same grid and transform as the lines (lib/grid.ts layoutLabels), so they
-              can never drift from them. Above the dots so they stay readable; ticks join each number to its line. */}
-          {labels && (
-            <svg aria-hidden="true" className="pointer-events-none absolute inset-0 size-full" data-grid-labels>
-              {labels.across.map((l) => (
-                <g key={`ax${l.v}`}>
-                  <line x1={l.tick[0]} y1={l.tick[1]} x2={l.tick[2]} y2={l.tick[3]} stroke="var(--muted)" shapeRendering="crispEdges" />
-                  <text data-gx-label={l.v} x={l.x} y={l.y} textAnchor="middle" dominantBaseline="text-after-edge" fontSize={10} fill="var(--muted)" stroke="var(--surface)" strokeWidth={3} paintOrder="stroke" strokeLinejoin="round" className="tabular-nums">
-                    {l.text}
-                  </text>
-                </g>
-              ))}
-              {labels.down.map((l) => (
-                <g key={`dy${l.v}`}>
-                  <line x1={l.tick[0]} y1={l.tick[1]} x2={l.tick[2]} y2={l.tick[3]} stroke="var(--muted)" shapeRendering="crispEdges" />
-                  <text data-gy-label={l.v} x={l.x} y={l.y} textAnchor="end" dominantBaseline="central" fontSize={10} fill="var(--muted)" stroke="var(--surface)" strokeWidth={3} paintOrder="stroke" strokeLinejoin="round" className="tabular-nums">
-                    {l.text}
-                  </text>
-                </g>
-              ))}
-            </svg>
-          )}
 
           {/* Team code centred on its glyphs in the top-left 0 to 10 cell, moving and scaling with the grid.
               Letters only, never a logo. */}
@@ -755,12 +736,35 @@ export function MapPanel(props: Props) {
             <p className="absolute inset-0 flex items-center justify-center text-muted">{props.loadFailed ? "The map could not be loaded." : "Loading the map..."}</p>
           )}
         </div>
+        {/* Grid numbers, laid out from the same grid and transform as the lines (lib/grid.ts layoutLabels), so they
+            can never drift from them. Outside the clipped plot (same origin) so a number on the frame's outer edge
+            is not cut off; above the dots so they stay readable; ticks join each number to its line. */}
+        {labels && (
+          <svg aria-hidden="true" className="pointer-events-none absolute inset-0 z-[5] size-full overflow-visible" data-grid-labels>
+            {labels.across.map((l) => (
+              <g key={`ax${l.v}`}>
+                <line x1={l.tick[0]} y1={l.tick[1]} x2={l.tick[2]} y2={l.tick[3]} stroke="var(--muted)" shapeRendering="crispEdges" />
+                <text data-gx-label={l.v} x={l.x} y={l.y} textAnchor="middle" dominantBaseline="text-after-edge" fontSize={10} fill="var(--muted)" stroke="var(--surface)" strokeWidth={3} paintOrder="stroke" strokeLinejoin="round" className="tabular-nums">
+                  {l.text}
+                </text>
+              </g>
+            ))}
+            {labels.down.map((l) => (
+              <g key={`dy${l.v}`}>
+                <line x1={l.tick[0]} y1={l.tick[1]} x2={l.tick[2]} y2={l.tick[3]} stroke="var(--muted)" shapeRendering="crispEdges" />
+                <text data-gy-label={l.v} x={l.x} y={l.y} textAnchor="end" dominantBaseline="central" fontSize={10} fill="var(--muted)" stroke="var(--surface)" strokeWidth={3} paintOrder="stroke" strokeLinejoin="round" className="tabular-nums">
+                  {l.text}
+                </text>
+              </g>
+            ))}
+          </svg>
+        )}
       </div>
 
       {/* Bottom row, fixed height: the zoom control is pinned bottom-right; the KEY sits bottom-left, capped 16 px
           short of the zoom control, and wraps onto more lines upward (over the empty bottom of the grid) when
           there are more items than fit, so neither the plot nor the zoom control ever moves. */}
-      <div className="relative h-[58px] shrink-0" data-box="map-bottom">
+      <div className="pointer-events-none absolute right-5 bottom-5 left-5 z-10 h-[58px] *:pointer-events-auto" data-box="map-bottom">
         <div className="absolute right-[148px] bottom-0 left-0 z-10 flex">
           <Key entries={legendEntries(mode, props.regions)} extras={extras} />
         </div>

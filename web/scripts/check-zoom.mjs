@@ -116,8 +116,13 @@ const redDot = (page) =>
   await page.waitForTimeout(200);
   const tf = await plot.evaluate((e) => ({ k: +e.dataset.zoom, x: +e.dataset.tx, y: +e.dataset.ty }));
   const g = 0.25;
-  const within = tf.x <= g * rect.width + 0.01 && tf.x >= rect.width * (1 - tf.k) - g * rect.width - 0.01 && tf.y <= g * rect.height + 0.01 && tf.y >= rect.height * (1 - tf.k) - g * rect.height - 0.01;
-  check("panning is limited: at most 25% past the 1x frame", within, JSON.stringify(tf));
+  const [fx0, fy0, fx1, fy1] = await plot.evaluate((e) => e.dataset.frame.split(",").map(Number));
+  const within =
+    tf.x <= fx0 * (1 - tf.k) + g * rect.width + 0.01 &&
+    tf.x >= fx1 * (1 - tf.k) - g * rect.width - 0.01 &&
+    tf.y <= fy0 * (1 - tf.k) + g * rect.height + 0.01 &&
+    tf.y >= fy1 * (1 - tf.k) - g * rect.height - 0.01;
+  check("panning is limited: at most 25% past the grid frame", within, JSON.stringify(tf));
 
   // A short click (under 4 px) still selects the season under it.
   await page.keyboard.press("0");

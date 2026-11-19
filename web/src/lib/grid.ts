@@ -121,3 +121,11 @@ export function layoutLabels(g: Grid, w: number, h: number): { across: Label[]; 
     down: ysIn.filter((l) => keep(l, sy)).map((l) => ({ v: l.v, text: text(l.v), x: left - LABEL.gapLeft, y: l.px, tick: [left - LABEL.tick, l.px, left, l.px] })),
   };
 }
+
+/**
+ * The grid's 0 to 100 frame in a w x h plot: from just right of the down-axis numbers ("100" plus its gap) and just
+ * below the across-axis numbers, to the plot's right and bottom edges. At 1x it is the whole map area.
+ */
+export function gridFrame(w: number, h: number): Box {
+  return { minX: LABEL.gapLeft + 3 * LABEL.charW + 2, minY: LABEL.gapTop + LABEL.h, maxX: w, maxY: h };
+}
