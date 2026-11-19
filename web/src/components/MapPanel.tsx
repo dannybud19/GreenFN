@@ -25,6 +25,7 @@ import {
   type Transform,
 } from "@/lib/map";
 import { computeGrid } from "@/lib/grid";
+import { fitTransform } from "@/lib/playback";
 import type { Theme } from "@/lib/theme";
 
 const DRAG_THRESHOLD = 4;
@@ -47,6 +48,12 @@ type Props = {
   searchRef: React.RefObject<HTMLInputElement | null>;
   theme: Theme;
   loadFailed: boolean;
+  /** Career playback: seasons up to index i of the selected player are shown, the newest pulsing. */
+  play: { i: number } | null;
+  /** Each new n runs the command once: fit the selected player's career, or reset to 1x. */
+  viewCmd: { kind: "fit" | "reset"; n: number } | null;
+  /** The playback bar, centred at the top of the map. */
+  overlay?: React.ReactNode;
 };
 
 type Colours = { ink: string; red: string; alpha: number; dim: number };
@@ -90,7 +97,7 @@ function TypedCode({ code, instant }: { code: string; instant: boolean }) {
 }
 
 export function MapPanel(props: Props) {
-  const { pts, byId, team, selected, comparing, mode, theme } = props;
+  const { pts, byId, team, selected, comparing, mode, theme, play, viewCmd } = props;
   const reduce = useReducedMotion();
   const plotRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -106,7 +113,7 @@ export function MapPanel(props: Props) {
   const zoomAnim = useRef<AnimationPlaybackControls | null>(null);
 
   // Animated scalars for the canvas, kept in refs and drawn on the next frame.
-  const anim = useRef({ appear: 0, modeT: 1, prevMode: mode as ColourMode, dimT: 0, teamT: 0 });
+  const anim = useRef({ appear: 0, modeT: 1, prevMode: mode as ColourMode, dimT: 0, teamT: 0, playT: 0 });
   const colours = useRef<Colours | null>(null);
   const frame = useRef(0);
   const dur = (s: number) => (reduce ? 0 : s);
@@ -152,7 +159,9 @@ export function MapPanel(props: Props) {
     ctx.clearRect(0, 0, size.w, size.h);
     const d = 2.3 * Math.min(Math.sqrt(k), 2.2);
     const half = d / 2;
-    const alpha = (c.alpha + (c.dim - c.alpha) * a.dimT) * a.appear;
+    const settled = (c.alpha + (c.dim - c.alpha) * a.dimT) * a.appear;
+    // During career playback the rest of the map dims further (to 0.18, as in the lab).
+    const alpha = settled + (0.18 * a.appear - settled) * a.playT;
 
     const pass = (m: ColourMode, al: number) => {
       if (al <= 0.002) return;
@@ -227,7 +236,7 @@ export function MapPanel(props: Props) {
 
   /** Eased zoom (buttons, double-click, reset). With an anchor the point under it stays put; jumps under reduced motion. */
   const animateTo = useCallback(
-    (target: Transform, anchor?: [number, number]) => {
+    (target: Transform, anchor?: [number, number], seconds = 0.32) => {
       zoomAnim.current?.stop();
       if (reduce) {
         commit(target);
@@ -235,7 +244,7 @@ export function MapPanel(props: Props) {
       }
       const from = tRef.current;
       zoomAnim.current = animate(0, 1, {
-        duration: 0.32,
+        duration: seconds,
         ease: [0.2, 0.7, 0.2, 1],
         onUpdate: (s) => {
           const k = from.k * Math.pow(target.k / from.k, s);
@@ -257,6 +266,23 @@ export function MapPanel(props: Props) {
     [animateTo, base, size],
   );
   const reset = useCallback(() => animateTo(IDENTITY), [animateTo]);
+
+  // Playback view commands: fit the selected player's seasons (600 ms, at most 4x), or reset to 1x.
+  const lastCmd = useRef(0);
+  useEffect(() => {
+    if (!viewCmd || viewCmd.n === lastCmd.current || !base || !pts) return;
+    if (viewCmd.kind === "reset") {
+      lastCmd.current = viewCmd.n;
+      animateTo(IDENTITY, undefined, 0.6);
+      return;
+    }
+    if (!selected || !pts.start.has(selected.id)) return;
+    lastCmd.current = viewCmd.n;
+    const [a, b] = pts.start.get(selected.id)!;
+    const xs = Array.from(base.bx.subarray(a, b));
+    const ys = Array.from(base.by.subarray(a, b));
+    animateTo(fitTransform(xs, ys, size.w, size.h), undefined, 0.6);
+  }, [viewCmd, base, pts, selected, size, animateTo]);
 
   // Wheel and trackpad pinch (ctrlKey wheel on macOS) zoom around the pointer and never scroll the page.
   // Safari's trackpad pinch arrives as gesture events instead.
@@ -298,7 +324,7 @@ export function MapPanel(props: Props) {
   }, [base, size, commit]);
 
   const tween = useCallback(
-    (key: "appear" | "modeT" | "dimT" | "teamT", to: number, seconds: number) =>
+    (key: "appear" | "modeT" | "dimT" | "teamT" | "playT", to: number, seconds: number) =>
       animate(anim.current[key], to, {
         duration: dur(seconds),
         ease: "easeOut",
@@ -330,6 +356,12 @@ export function MapPanel(props: Props) {
   }, [mode, tween]);
 
   // A team or a player selected: the rest dim; the team's seasons brighten.
+  const playing = play !== null;
+  useEffect(() => {
+    const c = tween("playT", playing ? 1 : 0, 0.35);
+    return () => c.stop();
+  }, [playing, tween]);
+
   const dimmed = Boolean(team || selected);
   useEffect(() => {
     const c = tween("dimT", dimmed ? 1 : 0, 0.35);
@@ -461,9 +493,11 @@ export function MapPanel(props: Props) {
     }
     return out.sort((m, n) => m.season - n.season);
   };
-  const own = seasonsOf(selected);
-  const comp = comparing && comparing.id !== selected?.id ? seasonsOf(comparing) : [];
-  const anchor = own.length ? own.reduce((m, p) => (p.py < m.py ? p : m)) : null;
+  // During playback only the seasons played so far are shown; no name tag and no comparing dots.
+  const allOwn = seasonsOf(selected);
+  const own = play ? allOwn.slice(0, play.i + 1) : allOwn;
+  const comp = !play && comparing && comparing.id !== selected?.id ? seasonsOf(comparing) : [];
+  const anchor = !play && own.length ? own.reduce((m, p) => (p.py < m.py ? p : m)) : null;
   const tagW = selected ? selected.name.length * 7.2 + 22 : 0;
   const tagLeft = anchor ? (anchor.px + 64 + tagW > size.w ? anchor.px - 64 - tagW : anchor.px + 64) : 0;
   const tagTop = anchor ? anchor.py - 46 : 0;
@@ -471,7 +505,7 @@ export function MapPanel(props: Props) {
   const extras: KeyExtra[] = [];
   if (team) extras.push({ label: `${team.short} season`, colour: "var(--ink)" });
   if (selected) extras.push({ label: "Selected", colour: "var(--red)" });
-  if (selected && comparing && comparing.id !== selected.id) extras.push({ label: "Comparing", colour: "var(--comparing)" });
+  if (!play && selected && comparing && comparing.id !== selected.id) extras.push({ label: "Comparing", colour: "var(--comparing)" });
 
   const hoverPlayer = hover !== null && pts ? byId.get(pts.player[hover]) : null;
   const hoverAt = hover !== null ? at(hover) : null;
@@ -646,10 +680,23 @@ export function MapPanel(props: Props) {
                 transition={{ delay: 0.15, duration: 0.3 }}
               />
             )}
+            {/* The newest played season pulses once when it arrives (not under reduced motion). */}
+            {play && !reduce && own.length > 0 && (
+              <motion.circle
+                key={`pulse-${selected!.id}-${own[own.length - 1].season}`}
+                cx={own[own.length - 1].px}
+                cy={own[own.length - 1].py}
+                fill="var(--red)"
+                initial={{ r: 4, opacity: 0.35 }}
+                animate={{ r: 12, opacity: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              />
+            )}
             <AnimatePresence>
               {own.map((p, i) => (
                 <motion.circle
                   key={`s-${selected!.id}-${p.season}`}
+                  data-season={p.season}
                   cx={p.px}
                   cy={p.py}
                   r={4.5}
@@ -657,9 +704,9 @@ export function MapPanel(props: Props) {
                   stroke="var(--surface)"
                   strokeWidth={1.5}
                   initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
+                  animate={{ scale: 1, opacity: play && i < own.length - 1 ? 0.75 : 1 }}
                   exit={{ scale: 0, opacity: 0, transition: { duration: 0.12 } }}
-                  transition={{ type: "spring", stiffness: 520, damping: 22, delay: i * 0.035 }}
+                  transition={{ type: "spring", stiffness: 520, damping: 22, delay: play ? 0 : i * 0.035 }}
                 />
               ))}
             </AnimatePresence>
@@ -696,6 +743,8 @@ export function MapPanel(props: Props) {
               </motion.div>
             )}
           </AnimatePresence>
+
+          <AnimatePresence>{props.overlay}</AnimatePresence>
 
           {!pts && (
             <p className="absolute inset-0 flex items-center justify-center text-muted">{props.loadFailed ? "The map could not be loaded." : "Loading the map..."}</p>

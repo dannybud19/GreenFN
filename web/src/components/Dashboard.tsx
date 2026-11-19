@@ -1,11 +1,12 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AboutCard } from "@/components/AboutCard";
 import { BrandBlock } from "@/components/BrandBlock";
 import { CompList } from "@/components/CompList";
 import { MapPanel } from "@/components/MapPanel";
+import { PlaybackBar } from "@/components/PlaybackBar";
 import { PlayerCard } from "@/components/PlayerCard";
 import { StartCard, type Tab } from "@/components/StartCard";
 import { useTheme } from "@/components/useTheme";
@@ -114,14 +115,71 @@ export function Dashboard({ initial }: { initial: Initial }) {
   }, [file, selectedId, lambda, profiles]);
   const comps = compIds.flatMap((id) => byId.get(id) ?? []);
 
+  // Career playback for the selected player: the season index shown and whether it is advancing.
+  const reduce = useReducedMotion();
+  const [pb, setPb] = useState<{ i: number; playing: boolean } | null>(null);
+  const pbActive = useRef(false);
+  useEffect(() => {
+    pbActive.current = pb !== null;
+  }, [pb]);
+  const [viewCmd, setViewCmd] = useState<{ kind: "fit" | "reset"; n: number } | null>(null);
+  const command = useCallback((kind: "fit" | "reset") => setViewCmd((c) => ({ kind, n: (c?.n ?? 0) + 1 })), []);
+  const careerLen = file?.seasons?.length ?? 0;
+
+  // One season every 900 ms (250 ms under reduced motion), stopping on the last.
+  useEffect(() => {
+    if (!pb?.playing || careerLen === 0) return;
+    const id = setInterval(
+      () => setPb((p) => (!p ? p : p.i + 1 >= careerLen - 1 ? { i: careerLen - 1, playing: false } : { i: p.i + 1, playing: true })),
+      reduce ? 250 : 900,
+    );
+    return () => clearInterval(id);
+  }, [pb?.playing, careerLen, reduce]);
+
+  const startPlayback = useCallback(() => {
+    setPb({ i: 0, playing: careerLen > 1 });
+    command("fit");
+  }, [careerLen, command]);
+  const stopPlayback = useCallback(() => {
+    if (!pbActive.current) return;
+    setPb(null);
+    command("reset");
+  }, [command]);
+  const onPlayButton = () => {
+    if (!pb) startPlayback();
+    else if (pb.playing) setPb({ ...pb, playing: false });
+    else if (pb.i >= careerLen - 1) startPlayback();
+    else setPb({ ...pb, playing: true });
+  };
+  const playLabel = !pb ? "▶ Play career" : pb.playing ? "❚❚ Pause" : pb.i >= careerLen - 1 ? "↺ Replay" : "▶ Play";
+  const stepTo = (i: number) => setPb({ i: Math.max(0, Math.min(careerLen - 1, i)), playing: false });
+
+  // Esc stops playback and restores the normal view.
+  useEffect(() => {
+    if (!pb) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && stopPlayback();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pb, stopPlayback]);
+
   const select = useCallback((id: string | null) => {
+    // Switching player while playback is on restarts it for the new player; clearing stops it.
+    if (pbActive.current) {
+      if (id) {
+        setPb({ i: 0, playing: true });
+        command("fit");
+      } else {
+        setPb(null);
+        command("reset");
+      }
+    }
     setSelectedId(id);
     setHoverId(null);
     setOpenId(null);
     panelRef.current?.scrollTo({ top: 0 });
     const path = id ? `/player/${id}` : "/";
     if (window.location.pathname !== path) window.history.pushState(null, "", path);
-  }, []);
+  }, [command]);
 
   // Back and forward buttons move between selected players.
   useEffect(() => {
@@ -130,6 +188,7 @@ export function Dashboard({ initial }: { initial: Initial }) {
       setHoverId(null);
       setOpenId(null);
       setLambda(0);
+      setPb(null);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -162,6 +221,13 @@ export function Dashboard({ initial }: { initial: Initial }) {
           searchRef={searchRef}
           theme={theme}
           loadFailed={loadFailed}
+          play={pb && file?.seasons ? { i: pb.i } : null}
+          viewCmd={viewCmd}
+          overlay={
+            pb && selected && file?.seasons ? (
+              <PlaybackBar key="bar" name={selected.name} seasons={file.seasons} i={pb.i} onPrev={() => stepTo(pb.i - 1)} onNext={() => stepTo(pb.i + 1)} />
+            ) : null
+          }
         />
       </motion.div>
       <div className="flex min-h-0 flex-col gap-6 max-md:contents">
@@ -213,7 +279,16 @@ export function Dashboard({ initial }: { initial: Initial }) {
                       Clear <span aria-hidden="true">×</span>
                     </button>
                   </div>
-                  <PlayerCard player={selected} region={initial.regions[selected.region] ?? null} lambda={lambda} onLambda={setLambda} busy={lambda > 0 && !profiles} />
+                  <PlayerCard
+                    player={selected}
+                    region={initial.regions[selected.region] ?? null}
+                    lambda={lambda}
+                    onLambda={setLambda}
+                    busy={lambda > 0 && !profiles}
+                    playLabel={playLabel}
+                    onPlay={onPlayButton}
+                    playDisabled={careerLen === 0}
+                  />
                   {file ? (
                     <CompList
                       comps={comps}

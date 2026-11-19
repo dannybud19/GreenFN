@@ -7,9 +7,12 @@ Status: running
 | 0 Plan and lab | 7b8f06e | |
 | 1 Data | dd9b838 | 14,672 of 14,672 seasons matched |
 | 2 Grid | fe54fb8 | At 1x major step 50 (minor 10, fully visible); at 8x major 5, minor 1 |
-| 3 Bounded pan and zoom | this commit | The clamp was already on main (728266d, the 7c follow-up fix); this checkpoint adapts `scripts/check-pan.mjs` to the number grid. 13 of 13 pass; zoom checks 17 of 17 |
+| 3 Bounded pan and zoom | 0c126ef | The clamp was already on main (728266d, the 7c follow-up fix); this checkpoint adapts `scripts/check-pan.mjs` to the number grid. 13 of 13 pass; zoom checks 17 of 17 |
+| 4 Career playback | this commit | `scripts/check-playback.mjs` 21 of 21 |
 
 ## Issues and fixes
+
+- The worktree's dev server once served stale CSS (new `--up` tokens missing, so badges rendered in ink); a restart fixed it. Production builds are unaffected.
 
 - `data/` and `exports/` are git-ignored, so the worktree links to the main checkout's copies (symlinks, excluded locally in `.git/info/exclude`, never committed). `precompute.py` was not run: 7d needs only `export_web.py`.
 - `nothing-style.md` does not mention the old no-raw-stats rule, so it needed no change; the data credit (meta.json, shown in the About card) now names the CC0 licence and the per-game averages.
