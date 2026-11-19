@@ -7,7 +7,7 @@ export type KeyExtra = { label: string; colour: string };
 /** KEY · 1 dot = 1 player season, then the swatches. Squares for the data, circles for highlights. */
 export function Key({ entries, extras }: { entries: { label: string; colour: string }[]; extras: KeyExtra[] }) {
   return (
-    <div className="rounded-xl border border-border bg-surface px-4 py-2" aria-label="Key">
+    <div className="max-w-full min-w-0 rounded-xl border border-border bg-surface px-4 py-2" aria-label="Key" data-box="key">
       <p className="label">
         <span className="font-semibold text-ink">Key</span>
         <span className="mx-[1em]">·</span>1 dot = 1 player season

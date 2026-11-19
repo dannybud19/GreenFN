@@ -32,7 +32,7 @@ export function ZoomControl({ zoom, onZoom }: { zoom: number; onZoom: (z: number
   const btn =
     "flex size-7 items-center justify-center rounded-lg bg-surface-2 text-[15px] text-ink transition-colors duration-[120ms] hover:bg-border disabled:opacity-40";
   return (
-    <div className="flex h-10 items-center gap-3 rounded-xl border border-border bg-surface px-[6px]" role="group" aria-label="Zoom">
+    <div className="flex h-10 w-[132px] items-center justify-between rounded-xl border border-border bg-surface px-[6px]" role="group" aria-label="Zoom">
       <motion.button type="button" whileTap={{ scale: 0.97 }} className={btn} aria-label="Zoom out" disabled={zoom <= ZOOM_MIN} onClick={() => onZoom(Math.max(ZOOM_MIN, zoom - ZOOM_STEP))}>
         −
       </motion.button>

@@ -548,9 +548,16 @@ export function MapPanel(props: Props) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <Key entries={legendEntries(mode, props.regions)} extras={extras} />
-        <ZoomControl zoom={zoomTarget} onZoom={zoomTo} />
+      {/* Bottom row, fixed height: the zoom control is pinned bottom-right; the KEY sits bottom-left, capped 16 px
+          short of the zoom control, and wraps onto more lines upward (over the empty bottom of the grid) when
+          there are more items than fit, so neither the plot nor the zoom control ever moves. */}
+      <div className="relative h-[58px] shrink-0" data-box="map-bottom">
+        <div className="absolute right-[148px] bottom-0 left-0 z-10 flex">
+          <Key entries={legendEntries(mode, props.regions)} extras={extras} />
+        </div>
+        <div className="absolute right-0 bottom-0" data-box="zoom">
+          <ZoomControl zoom={zoomTarget} onZoom={zoomTo} />
+        </div>
       </div>
     </section>
   );
