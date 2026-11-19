@@ -77,3 +77,5 @@ Work in a git worktree: `git worktree add ../GreenFN-7d -b phase-7d-graph main` 
 | Date | Change | Reason |
 |---|---|---|
 | 19 Nov 2026 | Box-score per-game averages (PTS, REB, AST) published for qualified seasons | Danny approved for career playback; dataset is CC0 |
+| 19 Nov 2026 | Grid numbers use the label grey (`--muted`) instead of the axis grey | The axis grey was 2.47:1 on white; Lighthouse flagged it. The lab used the label grey too |
+| 19 Nov 2026 | Pan clamp built ahead of checkpoint 3 | Already on main from the 7c follow-up fix (728266d); checkpoint 3 adapted its test to the number grid |

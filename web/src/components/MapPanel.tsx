@@ -554,7 +554,7 @@ export function MapPanel(props: Props) {
           {grid?.xs
             .filter((l) => l.major && l.px >= 0 && l.px <= size.w)
             .map((l) => (
-              <span key={`x${l.v}`} data-gx-label={l.v} className="absolute -top-[17px] -translate-x-1/2 text-[10px] text-axis tabular-nums" style={{ left: l.px }}>
+              <span key={`x${l.v}`} data-gx-label={l.v} className="absolute -top-[17px] -translate-x-1/2 text-[10px] text-muted tabular-nums" style={{ left: l.px }}>
                 {label(l.v)}
               </span>
             ))}
@@ -563,7 +563,7 @@ export function MapPanel(props: Props) {
           {grid?.ys
             .filter((l) => l.major && l.px >= 0 && l.px <= size.h)
             .map((l) => (
-              <span key={`y${l.v}`} data-gy-label={l.v} className="absolute right-[4px] -translate-y-1/2 text-[10px] text-axis tabular-nums" style={{ top: l.px }}>
+              <span key={`y${l.v}`} data-gy-label={l.v} className="absolute right-[4px] -translate-y-1/2 text-[10px] text-muted tabular-nums" style={{ top: l.px }}>
                 {label(l.v)}
               </span>
             ))}

@@ -18,7 +18,6 @@ async function open(opts = {}) {
   await page.waitForTimeout(800);
   return { ctx, page };
 }
-const bar = (page) => page.locator("[data-box=playback]");
 const state = (page) =>
   page.evaluate(() => {
     const b = document.querySelector("[data-box=playback]");
@@ -55,6 +54,7 @@ const state = (page) =>
   check("pause label while playing", (await page.locator("[data-play-button]").innerText()).includes("Pause"));
   await page.waitForTimeout(900 * 5);
   await page.locator("[data-play-button]").click(); // pause
+  await page.waitForTimeout(300); // last season's badges finish fading out (100 ms)
   s = await state(page);
   check("pause stops playback mid-career", (await page.locator("[data-play-button]").innerText()).includes("Play"), s.count);
   const later = await state(page);
