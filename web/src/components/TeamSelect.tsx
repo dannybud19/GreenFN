@@ -5,7 +5,7 @@ import type { Team } from "@/lib/data";
 /** Dropdown of every team code in the data, "All teams" first. Letters only, never a logo. */
 export function TeamSelect({ teams, value, onChange, id }: { teams: Team[]; value: string | null; onChange: (code: string | null) => void; id: string }) {
   return (
-    <div className="relative">
+    <div className="relative" data-box="team">
       <select
         id={id}
         value={value ?? ""}

@@ -100,3 +100,54 @@ export function project(x: number, y: number, fit: Fit, view: View, w: number, h
   const s = fit.scale * view.zoom;
   return [w / 2 + (x - view.cx) * s, h / 2 - (y - view.cy) * s];
 }
+
+/**
+ * The map's pan and zoom: screen = base * k + (x, y), where base is a point's position at 1x (fitted to the plot).
+ * Dots, grid lines, labels, the team code and every overlay go through the same transform.
+ */
+export type Transform = { k: number; x: number; y: number };
+export const IDENTITY: Transform = { k: 1, x: 0, y: 0 };
+export const K_MIN = 1;
+export const K_MAX = 8;
+
+export type Box = { minX: number; maxX: number; minY: number; maxY: number };
+
+export const applyT = (t: Transform, bx: number, by: number): [number, number] => [bx * t.k + t.x, by * t.k + t.y];
+
+/** Zoom to scale k2 keeping the screen point (px, py) fixed under the pointer. */
+export function zoomAround(t: Transform, k2: number, px: number, py: number): Transform {
+  const r = k2 / t.k;
+  return { k: k2, x: px - (px - t.x) * r, y: py - (py - t.y) * r };
+}
+
+/**
+ * Keeps the scale in [K_MIN, K_MAX] and the dots from being dragged out of view: at least `margin` px of the
+ * dots' bounding box (in base coordinates) stays inside the w x h plot on each axis.
+ */
+export function clampT(t: Transform, box: Box, w: number, h: number, margin = 60): Transform {
+  const k = Math.min(K_MAX, Math.max(K_MIN, t.k));
+  const fix = (v: number, lo: number, hi: number) => (lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, v)));
+  return {
+    k,
+    x: fix(t.x, margin - box.maxX * k, w - margin - box.minX * k),
+    y: fix(t.y, margin - box.maxY * k, h - margin - box.minY * k),
+  };
+}
+
+/** Base (1x) screen positions of every point and their bounding box. */
+export function basePositions(pts: Points, fit: Fit, w: number, h: number): { bx: Float32Array; by: Float32Array; box: Box } {
+  const bx = new Float32Array(pts.n);
+  const by = new Float32Array(pts.n);
+  const box: Box = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+  const v: View = { cx: fit.cx, cy: fit.cy, zoom: 1 };
+  for (let i = 0; i < pts.n; i++) {
+    const [x, y] = project(pts.x[i], pts.y[i], fit, v, w, h);
+    bx[i] = x;
+    by[i] = y;
+    box.minX = Math.min(box.minX, x);
+    box.maxX = Math.max(box.maxX, x);
+    box.minY = Math.min(box.minY, y);
+    box.maxY = Math.max(box.maxY, y);
+  }
+  return { bx, by, box };
+}

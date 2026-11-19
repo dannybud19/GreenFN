@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { DotMeter } from "@/components/DotMeter";
+import { FitName } from "@/components/FitName";
 import type { PlayerRow, Region } from "@/lib/data";
 import { spreadWords } from "@/lib/format";
 
@@ -28,7 +29,7 @@ export function PlayerCard({ player, region, lambda, onLambda, busy }: Props) {
   const words = spreadWords(player.spreadPct);
   return (
     <div className="px-5 pb-5">
-      <h2 className="dot-heading text-[30px] leading-[33px] break-words">{player.name}</h2>
+      <FitName name={player.name} />
       {region && (
         <p className="mt-2">
           <span className="inline-block rounded-full border border-border px-2 text-[11px] leading-[18px] text-muted">{region.name}</span>

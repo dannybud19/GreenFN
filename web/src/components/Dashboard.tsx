@@ -165,7 +165,7 @@ export function Dashboard({ initial }: { initial: Initial }) {
         />
       </motion.div>
       <div className="flex min-h-0 flex-col gap-6 max-md:contents">
-        <motion.header {...rise(1)} className="card h-[58px] shrink-0 max-md:order-1">
+        <motion.header {...rise(1)} className="card h-[58px] shrink-0 max-md:order-1" data-box="brand">
           <h1 className="sr-only">GreenFN: NBA career comps</h1>
           <BrandBlock theme={theme} onToggleTheme={toggleTheme} aboutOpen={aboutOpen} onAbout={() => setAboutOpen((o) => !o)} aboutRef={aboutRef} />
         </motion.header>
@@ -193,7 +193,7 @@ export function Dashboard({ initial }: { initial: Initial }) {
               />
             )}
           </AnimatePresence>
-          <section className="card h-full min-h-0 overflow-hidden max-md:rounded-b-none max-md:border-b-0 max-md:pt-4" aria-label={selected ? `${selected.name}: player and similar careers` : "Start here"}>
+          <section data-box="panel" className="card h-full min-h-0 overflow-hidden max-md:rounded-b-none max-md:border-b-0 max-md:pt-4" aria-label={selected ? `${selected.name}: player and similar careers` : "Start here"}>
             <AnimatePresence mode="wait" initial={false}>
               {selected ? (
                 <motion.div
