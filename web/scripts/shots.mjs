@@ -44,6 +44,34 @@ const STATES = {
     await page.locator("[data-why-scroll]").evaluate((el) => (el.scrollTop = 60));
     await settle(page, 500);
   },
+  "region-key": async (page) => {
+    await ready(page, "/");
+    await page.getByRole("radio", { name: "Region" }).click();
+    await settle(page, 700);
+  },
+  "zoom-4x-jordan": async (page) => {
+    await ready(page, "/player/jordami01");
+    // Double-click the middle of his seasons twice: 1x to 2x to 4x around them.
+    const c = await page.evaluate(() => {
+      const r = [...document.querySelectorAll("circle")].filter((e) => e.getAttribute("fill") === "var(--red)").map((e) => e.getBoundingClientRect());
+      return { x: r.reduce((a, q) => a + q.x + q.width / 2, 0) / r.length, y: r.reduce((a, q) => a + q.y + q.height / 2, 0) / r.length };
+    });
+    await page.mouse.dblclick(c.x, c.y);
+    await settle(page, 600);
+    await page.mouse.dblclick(c.x, c.y);
+    await settle(page, 900);
+    await page.mouse.move(2, 2);
+    await settle(page, 400);
+  },
+  "long-name": async (page) => {
+    await ready(page, "/player/alexani01");
+  },
+  "search-focused": async (page) => {
+    await ready(page, "/");
+    await page.keyboard.press("Tab");
+    await page.keyboard.type("Shai");
+    await settle(page, 600);
+  },
   about: async (page) => {
     await ready(page, "/player/jordami01");
     await page.getByRole("button", { name: "About GreenFN" }).click();
