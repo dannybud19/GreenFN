@@ -1,5 +1,5 @@
 // Career playback rules (phase7d_plan.md section 2), kept pure so they can be tested.
-import { clampT, type Transform } from "./map";
+import { clampT, type Box, type Transform } from "./map";
 
 export type Badge = { kind: "up" | "down" | "same"; diff: number } | null;
 
@@ -30,11 +30,11 @@ export function stepState(i: number, n: number): { prevDisabled: boolean; nextDi
 export const FIT_MAX = 4;
 
 /** Transform that frames a set of base points (with room around them), at most 4x, clamped to the plot. */
-export function fitTransform(xs: number[], ys: number[], w: number, h: number): Transform {
+export function fitTransform(xs: number[], ys: number[], w: number, h: number, frame?: Box): Transform {
   const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
   const k = Math.min(FIT_MAX, Math.max(1, Math.min(w / (maxX - minX + 260), h / (maxY - minY + 260))));
-  return clampT({ k, x: w / 2 - ((minX + maxX) / 2) * k, y: h / 2 - ((minY + maxY) / 2) * k }, w, h);
+  return clampT({ k, x: w / 2 - ((minX + maxX) / 2) * k, y: h / 2 - ((minY + maxY) / 2) * k }, w, h, frame);
 }

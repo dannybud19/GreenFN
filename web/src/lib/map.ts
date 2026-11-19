@@ -127,15 +127,49 @@ export const EDGE_GIVE = 0.25;
 export const giveAt = (k: number) => EDGE_GIVE * Math.min(1, Math.max(0, (k - 1) / 0.5));
 
 /**
- * Keeps the scale in [K_MIN, K_MAX] and the pan within the 1x frame plus the give: x in [w(1 - k) - g w, g w] and
- * y in [h(1 - k) - g h, g h] with g = giveAt(k). At 1x that pins the map (x = y = 0). Zoomed in, the frame's edges
- * can come up to 25% of the container inside it, so a career near an edge can be centred.
+ * Keeps the scale in [K_MIN, K_MAX] and the pan within the grid frame plus the give. The frame (its 1x rectangle,
+ * default the whole w x h container) must keep covering its own 1x position, except that zoomed in its edges may
+ * come up to 25% of the container inside it: x in [x1(1 - k) - g w, x0(1 - k) + g w], and the same for y, with
+ * g = giveAt(k). At 1x that pins the map (x = y = 0); a career near an edge can still be centred when zoomed.
  */
-export function clampT(t: Transform, w: number, h: number): Transform {
+export function clampT(t: Transform, w: number, h: number, frame: Box = { minX: 0, maxX: w, minY: 0, maxY: h }): Transform {
   const k = Math.min(K_MAX, Math.max(K_MIN, t.k));
   const g = giveAt(k);
-  const fix = (v: number, size: number) => Math.min(g * size, Math.max(size * (1 - k) - g * size, v));
-  return { k, x: fix(t.x, w), y: fix(t.y, h) };
+  const fix = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+  return {
+    k,
+    x: fix(t.x, frame.maxX * (1 - k) - g * w, frame.minX * (1 - k) + g * w),
+    y: fix(t.y, frame.maxY * (1 - k) - g * h, frame.minY * (1 - k) + g * h),
+  };
+}
+
+/**
+ * Base (1x) positions with the dots fitted inside a frame: one uniform scale for x and y (never stretched), as large
+ * as fits with `margin` px all round, and centred. Returns the positions and the dots' bounding box.
+ */
+export function fitInFrame(pts: { n: number; x: ArrayLike<number>; y: ArrayLike<number> }, frame: Box, margin = 8): { bx: Float32Array; by: Float32Array; box: Box } {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (let i = 0; i < pts.n; i++) {
+    minX = Math.min(minX, pts.x[i]);
+    maxX = Math.max(maxX, pts.x[i]);
+    minY = Math.min(minY, pts.y[i]);
+    maxY = Math.max(maxY, pts.y[i]);
+  }
+  const fw = frame.maxX - frame.minX - 2 * margin;
+  const fh = frame.maxY - frame.minY - 2 * margin;
+  const s = Math.min(fw / (maxX - minX || 1), fh / (maxY - minY || 1));
+  const ox = frame.minX + margin + (fw - (maxX - minX) * s) / 2;
+  const oy = frame.minY + margin + (fh - (maxY - minY) * s) / 2;
+  const bx = new Float32Array(pts.n);
+  const by = new Float32Array(pts.n);
+  for (let i = 0; i < pts.n; i++) {
+    bx[i] = ox + (pts.x[i] - minX) * s;
+    by[i] = oy + (maxY - pts.y[i]) * s; // y up in data, down on screen
+  }
+  return { bx, by, box: { minX: ox, maxX: ox + (maxX - minX) * s, minY: oy, maxY: oy + (maxY - minY) * s } };
 }
 
 /** Base (1x) screen positions of every point and their bounding box. */
