@@ -15,3 +15,6 @@ access_token
 
 .DS_Store
 exports/
+
+# The web app's derived data is committed (Vercel builds from GitHub); the root data/ stays ignored
+!web/public/data/
