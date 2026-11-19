@@ -29,9 +29,11 @@ describe("format", () => {
   });
   it("words the spread percentile without overstating", () => {
     expect(spreadWords(null)).toContain("not rated");
-    expect(spreadWords(0)).toBe("The steadiest of all players with 4+ seasons");
-    expect(spreadWords(0.0007)).toBe("Steadier than 99% of players with 4+ seasons");
-    expect(spreadWords(0.13)).toBe("Steadier than 87% of players with 4+ seasons");
-    expect(spreadWords(0.83)).toBe("Less steady than 83% of players with 4+ seasons");
+    expect(spreadWords(0)).toBe("The most consistent of all players who played 4+ seasons");
+    expect(spreadWords(0.0007)).toBe("More consistent than 99% of players who played 4+ seasons");
+    expect(spreadWords(0.13)).toBe("More consistent than 87% of players who played 4+ seasons");
+    expect(spreadWords(0.83)).toBe("Less consistent than 83% of players who played 4+ seasons");
+    expect(spreadWords(0.5)).toBe("More consistent than 50% of players who played 4+ seasons");
+    expect(spreadWords(0.51)).toBe("Less consistent than 51% of players who played 4+ seasons");
   });
 });
