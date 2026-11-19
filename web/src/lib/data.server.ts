@@ -1,7 +1,7 @@
 // Build-time loaders: read public/data/ straight from disk for static generation. Server-side only.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import type { Meta, PlayerFile, PlayerRow, Profiles } from "./data";
+import type { Legend, MapData, Meta, PlayerFile, PlayerRow, Profiles, Region, Team } from "./data";
 
 const DATA_DIR = path.join(process.cwd(), "public", "data");
 
@@ -15,6 +15,10 @@ let metaMemo: Promise<Meta> | null = null;
 export const loadPlayers = () => (playersMemo ??= readJson<PlayerRow[]>("players.json"));
 export const loadMeta = () => (metaMemo ??= readJson<Meta>("meta.json"));
 export const loadProfiles = () => readJson<Profiles>("profiles.json");
+export const loadRegions = () => readJson<Region[]>("regions.json");
+export const loadLegends = () => readJson<Legend[]>("legends.json");
+export const loadTeams = () => readJson<Team[]>("teams.json");
+export const loadMap = () => readJson<MapData>("map.json");
 export const loadParity = () => readJson<Record<string, string[]>>("parity.json");
 
 /** Returns null for an id with no file, so the page can answer 404. */
