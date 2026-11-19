@@ -85,8 +85,11 @@ export function SearchBox({ players, selectedName, onSelect, onClear, inputRef, 
   return (
     <div className="relative">
       <motion.div
-        className="flex h-10 items-center gap-3 rounded-[10px] border bg-surface pr-2 pl-[14px]"
-        animate={{ borderColor: "var(--ink)", boxShadow: focused ? "inset 0 0 0 1px var(--ink)" : "inset 0 0 0 0.5px var(--ink)" }}
+        // The outer box is the only focus indicator: its border is 1.5 px, 2.5 px while the input has focus.
+        className="flex h-10 items-center gap-2.5 rounded-[10px] border bg-surface pr-2 pl-[14px]"
+        data-box="search"
+        data-focused={focused}
+        animate={{ borderColor: "var(--ink)", boxShadow: focused ? "inset 0 0 0 1.5px var(--ink)" : "inset 0 0 0 0.5px var(--ink)" }}
         transition={{ duration: 0.12 }}
       >
         <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" className="shrink-0 text-ink">
@@ -120,7 +123,7 @@ export function SearchBox({ players, selectedName, onSelect, onClear, inputRef, 
             setOpen(false);
           }}
           onKeyDown={onKeyDown}
-          className="h-full min-w-0 flex-1 bg-transparent text-[13.5px] text-ink outline-none placeholder:text-faint focus-visible:outline-none"
+          className="h-full min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-[13.5px] text-ink shadow-none ring-0 outline-none placeholder:text-faint focus:outline-none focus-visible:outline-none"
         />
         {query ? (
           <button

@@ -123,9 +123,13 @@ html.theme-fade *::after {
 
 }
 
-:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 2px;
+/* Default focus ring, in the base layer so a component can replace it with its own (the search box draws focus on
+   its outer border instead of around the input). */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
 }
 
 .scroll-thin {

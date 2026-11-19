@@ -115,7 +115,9 @@ export function StartCard({ tab, onTab, legends, team, teams, byId, onSelect, on
                   <button type="button" className={rowClass} onClick={() => onSelect(player.id)}>
                     <Num i={i} />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] font-semibold">{player.name}</span>
+                      <span className="block truncate text-[13px] font-semibold" title={player.name}>
+                        {player.name}
+                      </span>
                       <span className="block text-[11.5px] leading-4 text-muted">
                         {player.pos} · {years(player.first, player.last)}
                       </span>
@@ -136,7 +138,9 @@ export function StartCard({ tab, onTab, legends, team, teams, byId, onSelect, on
                     <button type="button" className={rowClass} onClick={() => onSelect(pid)}>
                       <Num i={i} />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13px] font-semibold">{p?.name ?? pid}</span>
+                        <span className="block truncate text-[13px] font-semibold" title={p?.name ?? pid}>
+                          {p?.name ?? pid}
+                        </span>
                         <span className="block text-[11.5px] leading-4 text-muted">{years(first, last)}</span>
                       </span>
                       <DotMeter value={n} max={dots} total={dots} size={6} gap={3} label={`${n} seasons`} delay={0.1 + i * 0.03} />
@@ -153,7 +157,9 @@ export function StartCard({ tab, onTab, legends, team, teams, byId, onSelect, on
                   <button type="button" className={rowClass} onClick={() => onTeam(t.code)}>
                     <span className="dot-heading w-10 shrink-0 text-[16px] leading-none">{t.code}</span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] font-semibold">{t.name}</span>
+                      <span className="block truncate text-[13px] font-semibold" title={t.name}>
+                        {t.name}
+                      </span>
                       <span className="block text-[11.5px] leading-4 text-muted">
                         {years(t.first, t.last)} · {t.players} players
                       </span>
