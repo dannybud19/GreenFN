@@ -53,5 +53,5 @@
     "players_explained": 2467
   },
   "exportsCreated": "2026-11-19T12:46:01+00:00",
-  "attribution": "Statistics from Basketball Reference via the Kaggle dataset sumitrodatta/nba-aba-baa-stats. Comps, breakdowns and map are GreenFN's own model outputs."
+  "attribution": "Statistics from Basketball Reference via the Kaggle dataset sumitrodatta/nba-aba-baa-stats (CC0). Points, rebounds and assists per game are shown as published there; comps, breakdowns and map are GreenFN's own model outputs."
 }
