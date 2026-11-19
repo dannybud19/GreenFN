@@ -1,4 +1,25 @@
 import { describe, expect, it } from "vitest";
+import { STAT_PHRASES, whyOrder, whySentence } from "./format";
+
+describe("why-similar wording", () => {
+  const features = ["usg_percent", "fga_per_100_poss", "stl_percent", "tov_percent", "blk_percent"];
+
+  it("has a phrase for each of the 15 stats", () => {
+    expect(Object.keys(STAT_PHRASES)).toHaveLength(15);
+  });
+
+  it("builds the sentence from the top 3 positive stats, in order", () => {
+    expect(whySentence([0.69, 0.38, 0.33, -0.07, 0.1], features)).toBe(
+      "Both match closely on how much of the offence ran through them, how often they shot and how often they got steals.",
+    );
+    expect(whySentence([-1, -2, 0, 0, 0], features)).toContain("loosely");
+  });
+
+  it("orders rows: top 3 alike, then the biggest difference, then the rest", () => {
+    expect(whyOrder([0.69, 0.38, 0.33, -0.07, 0.1])).toEqual([0, 1, 2, 3, 4]);
+    expect(whyOrder([0.1, -0.5, 0.3, 0.2, -0.1])).toEqual([2, 3, 0, 1, 4]);
+  });
+});
 import { spreadWords, years } from "./format";
 
 describe("format", () => {
