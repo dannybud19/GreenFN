@@ -13,7 +13,7 @@ Source: the Figma MCP could not open file `rudsn3TASAFVvBxYq40VFK` from the conn
 | `grid` | #EFEFEB | #151513 | Map grid lines |
 | `ink` | #111111 | #F2F2F0 | Main text, active pill fill, filled dots, focused input border |
 | `ink-inv` | #FFFFFF | #000000 | Text on an `ink` fill (active pill, name tag) |
-| `muted` | #7A7A76 | #8C8C88 | Labels, secondary text, inactive pills |
+| `muted` | #6E6E6A (Figma #7A7A76, darkened for AA contrast) | #8C8C88 | Labels, secondary text, inactive pills |
 | `faint` | #B4B4AE | #55554F | Placeholder, row numbers, empty dots |
 | `axis` | #A5A5A0 | #4A4A45 | Grid letters and numbers |
 | `red` | #D71921 | #FF2D2D | Selected player only |

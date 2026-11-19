@@ -9,7 +9,7 @@
   --grid: #efefeb;
   --ink: #111111;
   --ink-inv: #ffffff;
-  --muted: #7a7a76;
+  --muted: #6e6e6a; /* Figma #7A7A76 is 4.3:1 on white; darkened to pass WCAG AA (4.5:1) */
   --faint: #b4b4ae;
   --axis: #a5a5a0;
   --red: #d71921;
@@ -39,6 +39,11 @@
   --dot-alpha: 0.7;
   --dot-dim: 0.35;
   color-scheme: dark;
+}
+
+/* Desktop layout from 1200 px (phase7b_plan.md section 7): 768 to 1199 is the tablet layout. */
+@theme {
+  --breakpoint-xl: 75rem; /* 1200 px; rem so it sorts after md (48rem) */
 }
 
 @theme inline {
@@ -85,6 +90,7 @@ html.theme-fade *::after {
     stroke 250ms ease !important;
 }
 
+@layer components {
 /* Nothing-style micro-label: uppercase Geist Mono, 11 px, 0.09em, grey. */
 .label {
   font-family: var(--font-geist-mono), monospace;
@@ -113,6 +119,8 @@ html.theme-fade *::after {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 20px;
+}
+
 }
 
 :focus-visible {

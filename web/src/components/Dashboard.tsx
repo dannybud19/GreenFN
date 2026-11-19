@@ -140,7 +140,7 @@ export function Dashboard({ initial }: { initial: Initial }) {
   }, [selected]);
 
   return (
-    <main className="flex flex-col gap-4 p-4 pb-[calc(44dvh+16px)] md:grid md:h-dvh md:min-h-[640px] md:grid-cols-[minmax(0,1fr)_340px] md:gap-6 md:p-6 min-[1200px]:grid-cols-[minmax(0,1fr)_432px] min-[1200px]:p-10">
+    <main className="flex flex-col gap-4 p-4 pb-[calc(44dvh+16px)] md:grid md:h-dvh md:min-h-[640px] md:grid-cols-[minmax(0,1fr)_340px] md:gap-6 md:p-6 xl:grid-cols-[minmax(0,1fr)_432px] xl:p-10">
       <motion.div {...rise(0)} className="min-h-0 max-md:order-2">
         <MapPanel
           pts={pts}

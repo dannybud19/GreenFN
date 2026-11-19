@@ -372,8 +372,8 @@ export function MapPanel(props: Props) {
 
   return (
     <section className="card relative flex min-h-0 flex-col p-4 md:h-full md:p-5" aria-label="Map of every NBA season since 1980">
-      <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2 min-[1200px]:grid-cols-[minmax(0,358px)_minmax(0,170px)_1fr] min-[1200px]:gap-x-7">
-        <div className="md:col-span-2 min-[1200px]:col-span-1">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-[minmax(0,358px)_minmax(0,170px)_1fr] xl:gap-x-7">
+        <div className="md:col-span-2 xl:col-span-1">
           <label htmlFor="player-search" className="label block" onClick={() => props.searchRef.current?.focus()}>
             <span className="step">01</span>Your player
           </label>
@@ -399,7 +399,7 @@ export function MapPanel(props: Props) {
         </div>
       </div>
 
-      <div className="relative mt-11 mb-5 h-[300px] pl-5 md:h-auto md:min-h-[260px] md:flex-1 min-[1200px]:mr-[19px] min-[1200px]:ml-[1px]">
+      <div className="relative mt-11 mb-5 h-[300px] pl-5 md:h-auto md:min-h-[260px] md:flex-1 xl:mr-[19px] xl:ml-[1px]">
         {/* Column letters and row numbers sit outside the plot. */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 left-5">
           {COLS.map((c, i) => (
