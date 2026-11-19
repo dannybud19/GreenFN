@@ -3,7 +3,7 @@
 // 1. At 1x a drag must not move the map at all.
 // 2. At 4x, dragging far in all four directions keeps the 1x frame covering the container:
 //    tx in [W(1-k), 0] and ty in [H(1-k), 0], reaching exactly the edge it was dragged towards.
-// 3. Every visible column/row label sits at the midpoint of its own two grid lines, after every move.
+// 3. Every number label sits on its own major grid line, after every move.
 import { chromium } from "playwright";
 
 const base = process.argv[2] ?? "http://localhost:3100";
@@ -33,26 +33,21 @@ const drag = async (dx, dy) => {
   await page.mouse.up();
   await page.waitForTimeout(150);
 };
-// Labels vs grid lines: each label's centre must be the midpoint of its column's (or row's) two lines.
+// Labels vs grid lines: each number label's centre must sit exactly on its own major grid line.
 const labelsTrack = () =>
   page.evaluate(() => {
-    const line = (sel) => document.querySelector(sel).getBoundingClientRect();
     let worst = 0;
     let shown = 0;
-    for (const l of document.querySelectorAll("[data-col-label]")) {
-      const i = +l.dataset.colLabel;
-      const a = line(`[data-col-line="${i}"]`);
-      const b = line(`[data-col-line="${i + 1}"]`);
+    for (const l of document.querySelectorAll("[data-gx-label]")) {
+      const line = document.querySelector(`[data-gx="${l.dataset.gxLabel}"]`).getBoundingClientRect();
       const r = l.getBoundingClientRect();
-      worst = Math.max(worst, Math.abs(r.x + r.width / 2 - (a.x + b.x) / 2));
+      worst = Math.max(worst, Math.abs(r.x + r.width / 2 - line.x));
       shown++;
     }
-    for (const l of document.querySelectorAll("[data-row-label]")) {
-      const i = +l.dataset.rowLabel;
-      const a = line(`[data-row-line="${i}"]`);
-      const b = line(`[data-row-line="${i + 1}"]`);
+    for (const l of document.querySelectorAll("[data-gy-label]")) {
+      const line = document.querySelector(`[data-gy="${l.dataset.gyLabel}"]`).getBoundingClientRect();
       const r = l.getBoundingClientRect();
-      worst = Math.max(worst, Math.abs(r.y + r.height / 2 - (a.y + b.y) / 2));
+      worst = Math.max(worst, Math.abs(r.y + r.height / 2 - line.y));
       shown++;
     }
     return { worst, shown };
@@ -64,7 +59,7 @@ await drag(220, -140);
 const t1 = await transform();
 check("1x: drag leaves the transform unchanged", t0.k === 1 && t1.x === 0 && t1.y === 0 && t1.k === 1, `before ${JSON.stringify(t0)}, after ${JSON.stringify(t1)}`);
 let lab = await labelsTrack();
-check("1x: labels sit between their grid lines", lab.worst < 1, `${lab.shown} labels, worst offset ${lab.worst.toFixed(2)} px`);
+check("1x: labels sit on their grid lines", lab.worst < 1, `${lab.shown} labels, worst offset ${lab.worst.toFixed(2)} px`);
 
 // 2. Zoom to 4x, then drag far each way.
 await page.getByRole("button", { name: "Zoom in" }).click();

@@ -6,7 +6,8 @@ Status: running
 |---|---|---|
 | 0 Plan and lab | 7b8f06e | |
 | 1 Data | dd9b838 | 14,672 of 14,672 seasons matched |
-| 2 Grid | this commit | At 1x major step 50 (minor 10, fully visible); at 8x major 5, minor 1 |
+| 2 Grid | fe54fb8 | At 1x major step 50 (minor 10, fully visible); at 8x major 5, minor 1 |
+| 3 Bounded pan and zoom | this commit | The clamp was already on main (728266d, the 7c follow-up fix); this checkpoint adapts `scripts/check-pan.mjs` to the number grid. 13 of 13 pass; zoom checks 17 of 17 |
 
 ## Issues and fixes
 
