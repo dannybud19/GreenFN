@@ -7,7 +7,8 @@ Reads exports/ (from precompute.py) and writes web/public/data/:
     players.json            search index: id, name, first and last season, seasons, decade, position,
                             spread percentile, region
     player/<id>.json        one file per player: top 10 comps with scores, why-similar breakdowns for the
-                            top 5, his season map points and his region (loaded only on his page)
+                            top 5, his season map points, his region, and points, rebounds and assists per
+                            game for each of his seasons (career playback; loaded only on his page)
     map.json                every season's map point, grouped by player: [season, x, y, teams, region]
                             (teams is the season's team codes joined by "/", e.g. "MIL/BOS" for a trade)
     teams.json              every team code with its name and its players with the most qualified seasons
@@ -17,7 +18,9 @@ Reads exports/ (from precompute.py) and writes web/public/data/:
     parity.json             the Python top 10 at lambda 0 for every player, for the TypeScript parity test
     meta.json               feature labels, model provenance, data attribution
 
-Only derived outputs are written: no raw stat tables. Run after precompute.py; re-run whenever it changes.
+Only derived outputs are written, plus one approved exception (Phase 7d, Danny, 19 Nov 2026): points, rebounds
+and assists per game for each qualified season, from Basketball Reference via the Kaggle dataset (CC0), for career
+playback. No other raw stat tables. Run after precompute.py; re-run whenever it changes.
 """
 
 import json
@@ -113,6 +116,20 @@ def season_teams(df: pd.DataFrame) -> pd.Series:
     return df["teams"].astype(str).where(multi, df["team"].astype(str))
 
 
+def per_game(root: Path) -> dict:
+    """(player_id, season) -> (pts, reb, ast) per game, NBA only. A traded player's season uses the combined row
+    (team TOT or 2TM, 3TM...), otherwise the only row. Rounded to one decimal."""
+    pg = pd.read_csv(root / "data" / "raw" / "Player Per Game.csv")
+    pg = pg[pg["lg"] == "NBA"]
+    combined = pg["team"].astype(str).str.fullmatch(r"TOT|\d+TM")
+    multi = pg.duplicated(["player_id", "season"], keep=False)
+    pg = pg[~multi | combined]
+    if pg.duplicated(["player_id", "season"]).any():
+        raise ValueError("per-game data still has more than one row for a player season")
+    return {(r.player_id, int(r.season)): (round(float(r.pts_per_game), 1), round(float(r.trb_per_game), 1), round(float(r.ast_per_game), 1))
+            for r in pg.itertuples()}
+
+
 def regions(seasons: pd.DataFrame) -> tuple[np.ndarray, list[dict], list[str]]:
     """K-means (9) on the map coordinates; name each cluster by matching the draft names to its z-scores."""
     km = KMeans(9, random_state=0, n_init=10).fit(seasons[["x", "y"]].values)
@@ -175,6 +192,10 @@ def main() -> None:
     missing = [c for c in codes if c not in TEAMS]
     if missing:
         raise ValueError(f"team codes with no name: {missing}")
+    games = per_game(ROOT)
+    missing = [(p, int(s)) for p, s in seasons[["player_id", "season"]].itertuples(index=False) if (p, int(s)) not in games]
+    if missing:
+        raise ValueError(f"{len(missing)} app seasons have no per-game row, e.g. {missing[:10]}")
     player_region = seasons.groupby("player_id")["region"].agg(lambda s: int(s.value_counts().index[0])).to_dict()
 
     if OUT.exists():
@@ -196,6 +217,7 @@ def main() -> None:
             "comps": [[c["player_id"], c["score"]] for c in comps[pid]],
             "why": {cid: [round(v[f], 4) for f in STYLE] for cid, v in why.get(pid, {}).items()},
             "map": [pt[:3] for pt in points[pid]],
+            "seasons": [[pt[0], *games[(pid, pt[0])]] for pt in sorted(points[pid])],
         }
         (OUT / "player" / f"{pid}.json").write_text(json.dumps(page, separators=(",", ":")))
 
@@ -230,14 +252,16 @@ def main() -> None:
     (OUT / "meta.json").write_text(json.dumps({
         "features": STYLE, "labels": [FEATURE_LABELS[f] for f in STYLE],
         "model": manifest["model"], "counts": manifest["counts"], "exportsCreated": manifest["created"],
-        "attribution": "Statistics from Basketball Reference via the Kaggle dataset sumitrodatta/nba-aba-baa-stats. "
-                       "Comps, breakdowns and map are GreenFN's own model outputs.",
+        "attribution": "Statistics from Basketball Reference via the Kaggle dataset sumitrodatta/nba-aba-baa-stats (CC0). "
+                       "Points, rebounds and assists per game are shown as published there; comps, breakdowns and "
+                       "map are GreenFN's own model outputs.",
     }, indent=2))
 
     sizes = {p.name: p.stat().st_size for p in OUT.iterdir() if p.is_file()}
     per_player = sum(f.stat().st_size for f in (OUT / "player").iterdir())
     print(f"Wrote {OUT}: {len(players)} player files ({per_player / 1e6:.1f} MB total), "
           + ", ".join(f"{k} {v / 1e6:.2f} MB" for k, v in sorted(sizes.items())))
+    print(f"Per game: {len(seasons)} of {len(seasons)} seasons matched (points, rebounds, assists).")
     print(f"Teams: {len(teams)} codes, all named. Legends: {len(legends)} written, skipped {skipped or 'none'}.")
     print("Region check:")
     for line in region_checks:

@@ -22,6 +22,8 @@ export type PlayerFile = {
   comps: [string, number][];
   why: Record<string, number[]>;
   map: [number, number, number][];
+  /** Per-game points, rebounds and assists for each of his seasons, in season order: [season, pts, reb, ast]. */
+  seasons: [number, number, number, number][];
 };
 
 /** One season on the map: [season, x, y, team codes joined by "/", region index]. */

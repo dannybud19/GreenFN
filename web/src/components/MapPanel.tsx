@@ -24,10 +24,10 @@ import {
   type Points,
   type Transform,
 } from "@/lib/map";
+import { computeGrid } from "@/lib/grid";
+import { fitTransform } from "@/lib/playback";
 import type { Theme } from "@/lib/theme";
 
-const COLS = ["A", "B", "C", "D", "E", "F", "G", "H"];
-const ROWS = [1, 2, 3, 4, 5, 6];
 const DRAG_THRESHOLD = 4;
 const BUTTON_STEP = 2;
 
@@ -48,6 +48,12 @@ type Props = {
   searchRef: React.RefObject<HTMLInputElement | null>;
   theme: Theme;
   loadFailed: boolean;
+  /** Career playback: seasons up to index i of the selected player are shown, the newest pulsing. */
+  play: { i: number } | null;
+  /** Each new n runs the command once: fit the selected player's career, or reset to 1x. */
+  viewCmd: { kind: "fit" | "reset"; n: number } | null;
+  /** The playback bar, centred at the top of the map. */
+  overlay?: React.ReactNode;
 };
 
 type Colours = { ink: string; red: string; alpha: number; dim: number };
@@ -91,7 +97,7 @@ function TypedCode({ code, instant }: { code: string; instant: boolean }) {
 }
 
 export function MapPanel(props: Props) {
-  const { pts, byId, team, selected, comparing, mode, theme } = props;
+  const { pts, byId, team, selected, comparing, mode, theme, play, viewCmd } = props;
   const reduce = useReducedMotion();
   const plotRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -107,7 +113,7 @@ export function MapPanel(props: Props) {
   const zoomAnim = useRef<AnimationPlaybackControls | null>(null);
 
   // Animated scalars for the canvas, kept in refs and drawn on the next frame.
-  const anim = useRef({ appear: 0, modeT: 1, prevMode: mode as ColourMode, dimT: 0, teamT: 0 });
+  const anim = useRef({ appear: 0, modeT: 1, prevMode: mode as ColourMode, dimT: 0, teamT: 0, playT: 0 });
   const colours = useRef<Colours | null>(null);
   const frame = useRef(0);
   const dur = (s: number) => (reduce ? 0 : s);
@@ -153,7 +159,9 @@ export function MapPanel(props: Props) {
     ctx.clearRect(0, 0, size.w, size.h);
     const d = 2.3 * Math.min(Math.sqrt(k), 2.2);
     const half = d / 2;
-    const alpha = (c.alpha + (c.dim - c.alpha) * a.dimT) * a.appear;
+    const settled = (c.alpha + (c.dim - c.alpha) * a.dimT) * a.appear;
+    // During career playback the rest of the map dims further (to 0.18, as in the lab).
+    const alpha = settled + (0.18 * a.appear - settled) * a.playT;
 
     const pass = (m: ColourMode, al: number) => {
       if (al <= 0.002) return;
@@ -162,7 +170,17 @@ export function MapPanel(props: Props) {
       allBuckets[m].forEach((idx, j) => {
         if (!idx) return;
         ctx.fillStyle = cols[j % cols.length];
-        for (const i of idx) ctx.fillRect(bx[i] * k + tx - half, by[i] * k + ty - half, d, d);
+        if (k >= 3) {
+          // Zoomed in, the dots are drawn round.
+          ctx.beginPath();
+          for (const i of idx) {
+            const px = bx[i] * k + tx;
+            const py = by[i] * k + ty;
+            ctx.moveTo(px + half, py);
+            ctx.arc(px, py, half, 0, Math.PI * 2);
+          }
+          ctx.fill();
+        } else for (const i of idx) ctx.fillRect(bx[i] * k + tx - half, by[i] * k + ty - half, d, d);
       });
     };
     if (a.modeT < 1) pass(a.prevMode, alpha * (1 - a.modeT));
@@ -218,7 +236,7 @@ export function MapPanel(props: Props) {
 
   /** Eased zoom (buttons, double-click, reset). With an anchor the point under it stays put; jumps under reduced motion. */
   const animateTo = useCallback(
-    (target: Transform, anchor?: [number, number]) => {
+    (target: Transform, anchor?: [number, number], seconds = 0.32) => {
       zoomAnim.current?.stop();
       if (reduce) {
         commit(target);
@@ -226,7 +244,7 @@ export function MapPanel(props: Props) {
       }
       const from = tRef.current;
       zoomAnim.current = animate(0, 1, {
-        duration: 0.32,
+        duration: seconds,
         ease: [0.2, 0.7, 0.2, 1],
         onUpdate: (s) => {
           const k = from.k * Math.pow(target.k / from.k, s);
@@ -248,6 +266,23 @@ export function MapPanel(props: Props) {
     [animateTo, base, size],
   );
   const reset = useCallback(() => animateTo(IDENTITY), [animateTo]);
+
+  // Playback view commands: fit the selected player's seasons (600 ms, at most 4x), or reset to 1x.
+  const lastCmd = useRef(0);
+  useEffect(() => {
+    if (!viewCmd || viewCmd.n === lastCmd.current || !base || !pts) return;
+    if (viewCmd.kind === "reset") {
+      lastCmd.current = viewCmd.n;
+      animateTo(IDENTITY, undefined, 0.6);
+      return;
+    }
+    if (!selected || !pts.start.has(selected.id)) return;
+    lastCmd.current = viewCmd.n;
+    const [a, b] = pts.start.get(selected.id)!;
+    const xs = Array.from(base.bx.subarray(a, b));
+    const ys = Array.from(base.by.subarray(a, b));
+    animateTo(fitTransform(xs, ys, size.w, size.h), undefined, 0.6);
+  }, [viewCmd, base, pts, selected, size, animateTo]);
 
   // Wheel and trackpad pinch (ctrlKey wheel on macOS) zoom around the pointer and never scroll the page.
   // Safari's trackpad pinch arrives as gesture events instead.
@@ -289,7 +324,7 @@ export function MapPanel(props: Props) {
   }, [base, size, commit]);
 
   const tween = useCallback(
-    (key: "appear" | "modeT" | "dimT" | "teamT", to: number, seconds: number) =>
+    (key: "appear" | "modeT" | "dimT" | "teamT" | "playT", to: number, seconds: number) =>
       animate(anim.current[key], to, {
         duration: dur(seconds),
         ease: "easeOut",
@@ -321,6 +356,12 @@ export function MapPanel(props: Props) {
   }, [mode, tween]);
 
   // A team or a player selected: the rest dim; the team's seasons brighten.
+  const playing = play !== null;
+  useEffect(() => {
+    const c = tween("playT", playing ? 1 : 0, 0.35);
+    return () => c.stop();
+  }, [playing, tween]);
+
   const dimmed = Boolean(team || selected);
   useEffect(() => {
     const c = tween("dimT", dimmed ? 1 : 0, 0.35);
@@ -452,9 +493,11 @@ export function MapPanel(props: Props) {
     }
     return out.sort((m, n) => m.season - n.season);
   };
-  const own = seasonsOf(selected);
-  const comp = comparing && comparing.id !== selected?.id ? seasonsOf(comparing) : [];
-  const anchor = own.length ? own.reduce((m, p) => (p.py < m.py ? p : m)) : null;
+  // During playback only the seasons played so far are shown; no name tag and no comparing dots.
+  const allOwn = seasonsOf(selected);
+  const own = play ? allOwn.slice(0, play.i + 1) : allOwn;
+  const comp = !play && comparing && comparing.id !== selected?.id ? seasonsOf(comparing) : [];
+  const anchor = !play && own.length ? own.reduce((m, p) => (p.py < m.py ? p : m)) : null;
   const tagW = selected ? selected.name.length * 7.2 + 22 : 0;
   const tagLeft = anchor ? (anchor.px + 64 + tagW > size.w ? anchor.px - 64 - tagW : anchor.px + 64) : 0;
   const tagTop = anchor ? anchor.py - 46 : 0;
@@ -462,16 +505,19 @@ export function MapPanel(props: Props) {
   const extras: KeyExtra[] = [];
   if (team) extras.push({ label: `${team.short} season`, colour: "var(--ink)" });
   if (selected) extras.push({ label: "Selected", colour: "var(--red)" });
-  if (selected && comparing && comparing.id !== selected.id) extras.push({ label: "Comparing", colour: "var(--comparing)" });
+  if (!play && selected && comparing && comparing.id !== selected.id) extras.push({ label: "Comparing", colour: "var(--comparing)" });
 
   const hoverPlayer = hover !== null && pts ? byId.get(pts.player[hover]) : null;
   const hoverAt = hover !== null ? at(hover) : null;
 
-  // The grid moves and scales with the dots: lines at the transformed cell edges, labels at transformed centres.
-  const cellW = size.w / 8;
-  const cellH = size.h / 6;
-  const colX = (i: number) => i * cellW * t.k + t.x;
-  const rowY = (i: number) => i * cellH * t.k + t.y;
+  // The grid: 0 to 100 across the dots' bounding box, origin top-left, adaptive major and minor lines. Lines and
+  // labels come from the same transform, so they move and scale together with the dots.
+  const grid = base && size.w > 0 ? computeGrid(t, base.box, size.w, size.h) : null;
+  const label = (v: number) => v.toFixed(grid?.decimals ?? 0);
+  // The team code's cell: 0 to 10 by 0 to 10 at 1x (base coordinates), scaled with the map.
+  const teamCell = base
+    ? { x: base.box.minX, y: base.box.minY, w: (base.box.maxX - base.box.minX) / 10, h: (base.box.maxY - base.box.minY) / 10 }
+    : null;
 
   return (
     <section className="card relative flex min-h-0 flex-col p-4 md:h-full md:p-5" aria-label="Map of every NBA season since 1980" data-box="map">
@@ -503,26 +549,24 @@ export function MapPanel(props: Props) {
       </div>
 
       <div className="relative mt-11 mb-5 h-[300px] pl-5 md:h-auto md:min-h-[260px] md:flex-1 xl:mr-[19px] xl:ml-[1px]">
-        {/* Column letters and row numbers follow their columns and rows; off-screen ones are hidden. */}
+        {/* Grid numbers on the top and left edges, at the major lines in view. */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 left-5">
-          {COLS.map((c, i) => {
-            const x = colX(i + 0.5);
-            return x < 0 || x > size.w ? null : (
-              <span key={c} data-col-label={i} className="absolute -top-[17px] -translate-x-1/2 text-[10px] text-axis" style={{ left: x }}>
-                {c}
+          {grid?.xs
+            .filter((l) => l.major && l.px >= 0 && l.px <= size.w)
+            .map((l) => (
+              <span key={`x${l.v}`} data-gx-label={l.v} className="absolute -top-[17px] -translate-x-1/2 text-[10px] text-muted tabular-nums" style={{ left: l.px }}>
+                {label(l.v)}
               </span>
-            );
-          })}
+            ))}
         </div>
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-5">
-          {ROWS.map((r, i) => {
-            const y = rowY(i + 0.5);
-            return y < 0 || y > size.h ? null : (
-              <span key={r} data-row-label={i} className="absolute left-0 -translate-y-1/2 text-[10px] text-axis" style={{ top: y }}>
-                {r}
+          {grid?.ys
+            .filter((l) => l.major && l.px >= 0 && l.px <= size.h)
+            .map((l) => (
+              <span key={`y${l.v}`} data-gy-label={l.v} className="absolute right-[4px] -translate-y-1/2 text-[10px] text-muted tabular-nums" style={{ top: l.px }}>
+                {label(l.v)}
               </span>
-            );
-          })}
+            ))}
         </div>
 
         <div
@@ -546,21 +590,47 @@ export function MapPanel(props: Props) {
           data-ty={t.y.toFixed(2)}
         >
           <svg aria-hidden="true" className="absolute inset-0 size-full">
-            {Array.from({ length: 9 }, (_, i) => (
-              <line key={`v${i}`} data-col-line={i} x1={colX(i)} x2={colX(i)} y1={rowY(0)} y2={rowY(6)} stroke="var(--grid)" shapeRendering="crispEdges" />
-            ))}
-            {Array.from({ length: 7 }, (_, i) => (
-              <line key={`h${i}`} data-row-line={i} y1={rowY(i)} y2={rowY(i)} x1={colX(0)} x2={colX(8)} stroke="var(--grid)" shapeRendering="crispEdges" />
-            ))}
+            {grid && (
+              <>
+                <g opacity={grid.minorAlpha}>
+                  {grid.xs
+                    .filter((l) => !l.major)
+                    .map((l) => (
+                      <line key={`vx${l.v}`} x1={l.px} x2={l.px} y1={grid.span.y0} y2={grid.span.y1} stroke="var(--grid)" shapeRendering="crispEdges" />
+                    ))}
+                  {grid.ys
+                    .filter((l) => !l.major)
+                    .map((l) => (
+                      <line key={`hy${l.v}`} y1={l.px} y2={l.px} x1={grid.span.x0} x2={grid.span.x1} stroke="var(--grid)" shapeRendering="crispEdges" />
+                    ))}
+                </g>
+                {grid.xs
+                  .filter((l) => l.major)
+                  .map((l) => (
+                    <line key={`VX${l.v}`} data-gx={l.v} x1={l.px} x2={l.px} y1={grid.span.y0} y2={grid.span.y1} stroke="var(--grid-major)" shapeRendering="crispEdges" />
+                  ))}
+                {grid.ys
+                  .filter((l) => l.major)
+                  .map((l) => (
+                    <line key={`HY${l.v}`} data-gy={l.v} y1={l.px} y2={l.px} x1={grid.span.x0} x2={grid.span.x1} stroke="var(--grid-major)" shapeRendering="crispEdges" />
+                  ))}
+              </>
+            )}
           </svg>
 
           <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 block size-full" />
 
-          {/* Team code centred on its glyphs in cell A1, moving with the cell. Letters only, never a logo. */}
+          {/* Team code centred on its glyphs in the top-left 0 to 10 cell, moving and scaling with the grid.
+              Letters only, never a logo. */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute flex items-center justify-center"
-            style={{ left: colX(0), top: rowY(0), width: cellW * t.k, height: cellH * t.k }}
+            data-team-cell
+            className="pointer-events-none absolute top-0 left-0 flex origin-top-left items-center justify-center"
+            style={
+              teamCell
+                ? { width: teamCell.w, height: teamCell.h, transform: `translate(${teamCell.x * t.k + t.x}px, ${teamCell.y * t.k + t.y}px) scale(${t.k})` }
+                : { display: "none" }
+            }
           >
             <AnimatePresence>
               {team && (
@@ -610,10 +680,23 @@ export function MapPanel(props: Props) {
                 transition={{ delay: 0.15, duration: 0.3 }}
               />
             )}
+            {/* The newest played season pulses once when it arrives (not under reduced motion). */}
+            {play && !reduce && own.length > 0 && (
+              <motion.circle
+                key={`pulse-${selected!.id}-${own[own.length - 1].season}`}
+                cx={own[own.length - 1].px}
+                cy={own[own.length - 1].py}
+                fill="var(--red)"
+                initial={{ r: 4, opacity: 0.35 }}
+                animate={{ r: 12, opacity: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              />
+            )}
             <AnimatePresence>
               {own.map((p, i) => (
                 <motion.circle
                   key={`s-${selected!.id}-${p.season}`}
+                  data-season={p.season}
                   cx={p.px}
                   cy={p.py}
                   r={4.5}
@@ -621,9 +704,9 @@ export function MapPanel(props: Props) {
                   stroke="var(--surface)"
                   strokeWidth={1.5}
                   initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
+                  animate={{ scale: 1, opacity: play && i < own.length - 1 ? 0.75 : 1 }}
                   exit={{ scale: 0, opacity: 0, transition: { duration: 0.12 } }}
-                  transition={{ type: "spring", stiffness: 520, damping: 22, delay: i * 0.035 }}
+                  transition={{ type: "spring", stiffness: 520, damping: 22, delay: play ? 0 : i * 0.035 }}
                 />
               ))}
             </AnimatePresence>
@@ -660,6 +743,8 @@ export function MapPanel(props: Props) {
               </motion.div>
             )}
           </AnimatePresence>
+
+          <AnimatePresence>{props.overlay}</AnimatePresence>
 
           {!pts && (
             <p className="absolute inset-0 flex items-center justify-center text-muted">{props.loadFailed ? "The map could not be loaded." : "Loading the map..."}</p>

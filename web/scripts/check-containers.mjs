@@ -40,6 +40,25 @@ const STATES = [
     },
   ],
   [
+    "Jordan, career playback running",
+    async (p) => {
+      await ready(p, "/player/jordami01");
+      await p.locator("[data-play-button]").click();
+      await p.waitForTimeout(3200);
+    },
+  ],
+  [
+    "Jordan, playback paused on the last season",
+    async (p) => {
+      await ready(p, "/player/jordami01");
+      await p.locator("[data-play-button]").click();
+      await p.waitForTimeout(200);
+      await p.locator("[data-play-button]").click();
+      for (let i = 0; i < 13; i++) await p.getByRole("button", { name: "Next season" }).click();
+      await p.waitForTimeout(800);
+    },
+  ],
+  [
     "Search focused with text",
     async (p) => {
       await ready(p, "/");

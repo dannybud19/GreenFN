@@ -12,6 +12,10 @@ type Props = {
   lambda: number;
   onLambda: (l: number) => void;
   busy: boolean;
+  /** Career playback button: "▶ Play career", "❚❚ Pause", "▶ Play" (paused) or "↺ Replay". */
+  playLabel: string;
+  onPlay: () => void;
+  playDisabled: boolean;
 };
 
 function Stat({ label, value }: { label: string; value: string | number }) {
@@ -24,17 +28,25 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 }
 
 /** Doto name, seasons / from / to / position, a consistency dot meter and the lambda row. */
-export function PlayerCard({ player, region, lambda, onLambda, busy }: Props) {
+export function PlayerCard({ player, region, lambda, onLambda, busy, playLabel, onPlay, playDisabled }: Props) {
   const steady = player.spreadPct === null ? 0 : 1 - player.spreadPct;
   const words = spreadWords(player.spreadPct);
   return (
     <div className="px-5 pb-5">
       <FitName name={player.name} />
-      {region && (
-        <p className="mt-2">
-          <span className="inline-block rounded-full border border-border px-2 text-[11px] leading-[18px] text-muted">{region.name}</span>
-        </p>
-      )}
+      <div className="mt-2 flex h-7 items-center justify-between gap-3">
+        {region ? <span className="inline-block truncate rounded-full border border-border px-2 text-[11px] leading-[18px] text-muted">{region.name}</span> : <span />}
+        <motion.button
+          type="button"
+          onClick={onPlay}
+          disabled={playDisabled}
+          whileTap={{ scale: 0.97 }}
+          data-play-button
+          className="h-7 shrink-0 rounded-full border border-ink px-3 text-[12px] font-medium whitespace-nowrap transition-colors duration-[120ms] hover:bg-ink hover:text-ink-inv disabled:opacity-40"
+        >
+          {playLabel}
+        </motion.button>
+      </div>
       <dl className="mt-4 grid grid-cols-4 gap-3">
         <Stat label="Seasons" value={player.seasons} />
         <Stat label="From" value={player.first} />

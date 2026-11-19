@@ -18,6 +18,29 @@ async function ready(page, url) {
   await settle(page);
 }
 
+async function zoomed(page, clicks) {
+  await ready(page, "/");
+  for (let i = 0; i < clicks; i++) {
+    await page.getByRole("button", { name: "Zoom in" }).click();
+    await settle(page, 450);
+  }
+  await page.mouse.move(2, 2);
+  await settle(page, 400);
+}
+
+async function playbackAt(page, target) {
+  await ready(page, "/player/jordami01");
+  await page.locator("[data-play-button]").click();
+  await settle(page, 300);
+  await page.locator("[data-play-button]").click(); // pause on the first season
+  for (let i = 0; i < target; i++) {
+    await page.getByRole("button", { name: "Next season" }).click();
+    await settle(page, 80);
+  }
+  await page.mouse.move(2, 2);
+  await settle(page, 1000);
+}
+
 const STATES = {
   start: async (page) => ready(page, "/"),
   legends: async (page) => {
@@ -72,6 +95,14 @@ const STATES = {
     await page.keyboard.type("Shai");
     await settle(page, 600);
   },
+  // The grid at 1x, 4x and 8x (zoomed around the centre with the + button).
+  "grid-1x": async (page) => ready(page, "/"),
+  "grid-4x": async (page) => zoomed(page, 2),
+  "grid-8x": async (page) => zoomed(page, 3),
+  // Career playback for Jordan: start, pause, then step to a given season with the arrows.
+  "playback-mid": async (page) => playbackAt(page, 6),
+  "playback-first": async (page) => playbackAt(page, 0),
+  "playback-last": async (page) => playbackAt(page, 13),
   about: async (page) => {
     await ready(page, "/player/jordami01");
     await page.getByRole("button", { name: "About GreenFN" }).click();

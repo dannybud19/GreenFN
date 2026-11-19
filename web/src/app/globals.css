@@ -6,13 +6,17 @@
   --surface: #ffffff;
   --surface-2: #f4f4f1;
   --border: #e3e3de;
-  --grid: #efefeb;
+  --grid: #f0f0ec;
+  --grid-major: #e0e0da;
   --ink: #111111;
   --ink-inv: #ffffff;
   --muted: #6e6e6a; /* Figma #7A7A76 is 4.3:1 on white; darkened to pass WCAG AA (4.5:1) */
   --faint: #b4b4ae;
   --axis: #a5a5a0;
   --red: #d71921;
+  --up: #0e7a4a;
+  --down: var(--red);
+  --same: var(--muted);
   --comparing: #555555;
   --dot-empty: #e3e3de;
   --tint: rgba(17, 17, 17, 0.04);
@@ -26,13 +30,15 @@
   --surface: #0b0b0b;
   --surface-2: #161614;
   --border: #232320;
-  --grid: #151513;
+  --grid: #1a1a18;
+  --grid-major: #2a2a27;
   --ink: #f2f2f0;
   --ink-inv: #000000;
   --muted: #8c8c88;
   --faint: #55554f;
   --axis: #4a4a45;
   --red: #ff2d2d;
+  --up: #3ddc84;
   --comparing: #bdbdb8;
   --dot-empty: #2e2e2d;
   --tint: rgba(242, 242, 240, 0.06);
@@ -52,12 +58,14 @@
   --color-surface-2: var(--surface-2);
   --color-border: var(--border);
   --color-grid: var(--grid);
+  --color-grid-major: var(--grid-major);
   --color-ink: var(--ink);
   --color-ink-inv: var(--ink-inv);
   --color-muted: var(--muted);
   --color-faint: var(--faint);
   --color-axis: var(--axis);
   --color-red: var(--red);
+  --color-up: var(--up);
   --color-comparing: var(--comparing);
   --color-dot-empty: var(--dot-empty);
   --color-tint: var(--tint);
@@ -146,7 +154,36 @@ input[type="range"].lambda {
   accent-color: var(--ink);
 }
 
+/* Career playback: a value flashes its badge colour for 700 ms, then settles. */
+@keyframes flash-up {
+  from {
+    color: var(--up);
+  }
+  to {
+    color: var(--ink);
+  }
+}
+@keyframes flash-down {
+  from {
+    color: var(--down);
+  }
+  to {
+    color: var(--ink);
+  }
+}
+.flash-up {
+  animation: flash-up 700ms ease;
+}
+.flash-down {
+  animation: flash-down 700ms ease;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .flash-up,
+  .flash-down {
+    animation: none;
+  }
+
   html.theme-fade *,
   html.theme-fade *::before,
   html.theme-fade *::after {
