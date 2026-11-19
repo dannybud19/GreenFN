@@ -34,7 +34,8 @@ Status: finished
 | Vercel Root Directory set to `web` with the CLI (`vercel api` PATCH) | none (project setting) | Failed preview redeployed: ready in 2 min |
 | Region 7 named "Ball-dominant guards" | 86d314f | Fixed override keyed on the cluster's top-3 stats |
 | Why rows scroll in their own box | 981eb5a | Own top border, snap to whole rows, short top and bottom fades |
-| Row numbers in the label grey; ESC button name includes "ESC" | this commit | Lighthouse accessibility 100 on `/` and on `/player/jordami01` |
+| Row numbers in the label grey; ESC button name includes "ESC" | 8f2381c | Lighthouse accessibility 100 on `/` and on `/player/jordami01` |
+| Re-verified: 31 tests pass, parity unchanged, build 2,471 pages; fresh `comp-light.png` / `comp-dark.png` | this commit | Why rows snap to whole rows (scrollTop 0, 78, 195, 429 for requests 0, 60, 200, 999) |
 
 ## Key numbers
 - Motion version / Next.js version: motion 14.14.0, Next.js 16.4.6, React 19.3.0, Playwright 1.65.1 (dev only)
